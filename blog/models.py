@@ -109,7 +109,7 @@ class Article(models.Model):
 
 
 class ArticleRequest(models.Model):
-    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='requests')
+    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='requests', null=True, blank=True)
     action = models.CharField(max_length=20, choices=RequestActionChoices.choices)
     status = models.CharField(
         max_length=20, choices=RequestStatusChoices.choices,
