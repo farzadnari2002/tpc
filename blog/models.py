@@ -90,7 +90,7 @@ class Article(models.Model):
         options={'quality': 80}
     ) 
     category = models.ManyToManyField(ArticleCategory, related_name="articles", db_table='article_category_link')
-    content = models.models.JSONField()
+    content = models.JSONField()
     published_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_deleted = models.BooleanField(default=False)
@@ -101,7 +101,7 @@ class Article(models.Model):
     class Meta:
         verbose_name = _('Article')
         verbose_name_plural = _('Articles')
-        ordering = ['-created_at']
+        ordering = ['-published_at']
         db_table = 'article'
         indexes = [
             models.Index(fields=['slug'])
@@ -183,7 +183,7 @@ class ArticleRequest(models.Model):
 
 class ArticleImage(models.Model):
     article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to=get_upload_banner, validators=[validate_image_size])
+    image = models.ImageField(upload_to=get_upload_images, validators=[validate_image_size])
     alt_text = models.CharField(max_length=255)
 
     def __str__(self):
