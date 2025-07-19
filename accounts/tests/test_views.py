@@ -2,9 +2,11 @@ from PIL import Image
 import tempfile
 
 from django.urls import reverse
+from django.http import HttpResponse
 from django.test import override_settings, TestCase
 from django.utils.timezone import timedelta, datetime
 from django.contrib.auth.models import Group
+from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.test import APIClient
@@ -20,8 +22,24 @@ class APITestCase(TestCase):
     
     def login(self, user):
         self.refresh = RefreshToken.for_user(user)
+        
+        response = HttpResponse()
+        
         self.client.cookies['access_token'] = str(self.refresh.access_token)
         self.client.cookies['refresh_token'] = str(self.refresh)
+        
+        response.set_cookie(
+            'access_token',
+            str(self.refresh.access_token),
+            httponly=True
+        )
+        response.set_cookie(
+            'refresh_token',
+            str(self.refresh),
+            httponly=True
+        )
+        
+        return response
     
     @classmethod
     def create_test_image(cls, prefix='test'):
@@ -51,6 +69,9 @@ class TestRequestOTPView(APITestCase):
         self.valid_new_phone = "+989123456780"
         self.url = reverse('request-otp')
         self.user = User.objects.create(phone=self.valid_phone)
+    
+    def setUp(self):
+        cache.clear()
         
     @override_settings(DEBUG=True)
     @patch('accounts.views.generate_otp_auth_num')
