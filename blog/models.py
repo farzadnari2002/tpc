@@ -46,7 +46,7 @@ class ArticleCategory(MPTTModel):
     slug = AutoSlugField(source_field='name')
     parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='childrens')
     is_active = models.BooleanField(default=True)
-    hide_author = models.BooleanField(default=False)
+    is_special = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
                  
