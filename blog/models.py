@@ -42,13 +42,19 @@ class RequestActionChoices(models.TextChoices):
 
 
 class ArticleCategory(MPTTModel):
-    name = models.CharField(max_length=100)
-    slug = AutoSlugField(source_field='name')
-    parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='childrens')
-    is_active = models.BooleanField(default=True)
-    is_special = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    name = models.CharField(max_length=100, verbose_name=_('نام دسته بندی'))
+    slug = AutoSlugField(source_field='name', verbose_name=_('آدرس دسته بندی'))
+    parent = TreeForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True, blank=True,
+        related_name='childrens',
+        verbose_name=_('دسته بندی والد')
+        )
+    is_active = models.BooleanField(default=True), verbose_name=_('وضعیت فعال بودن/نبودن')
+    is_special = models.BooleanField(default=False, verbose_name=_('تاریخ ایجاد'))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاریخ ایجاد'))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاریخ بروزرسانی'))
                  
     def clean(self):
         if self.parent:
@@ -64,8 +70,8 @@ class ArticleCategory(MPTTModel):
         return self.name
            
     class Meta:
-        verbose_name = _('Article Category')
-        verbose_name_plural = _('Article Categories')
+        verbose_name = _('دسته بندی دوره')
+        verbose_name_plural = _('دسته بندی های دوره')
         ordering = ['name']
         db_table = 'article_category'
         indexes = [
