@@ -193,5 +193,6 @@ class ArticleImage(models.Model):
     class Meta:
         verbose_name = _('Article Image')
         verbose_name_plural = _("Article Images")
+        ordering = ['-created_at']
 
 
