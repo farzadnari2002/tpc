@@ -93,6 +93,7 @@ class Article(models.Model):
     content = models.JSONField()
     published_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_published = models.BooleanField(default=False, verbose_name=_('وضعیت انتشار'))
     is_deleted = models.BooleanField(default=False)
 
     def __str__(self):
