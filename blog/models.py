@@ -180,6 +180,7 @@ class ArticleRequest(models.Model):
         verbose_name = _("درخواست")
         verbose_name_plural = _("درخواست ها")
         ordering = ['-created_at', '-id']
+        db_table = 'article_request'
 
 
 class ArticleImage(models.Model):
@@ -194,5 +195,6 @@ class ArticleImage(models.Model):
         verbose_name = _('Article Image')
         verbose_name_plural = _("Article Images")
         ordering = ['-created_at']
+        
 
 
