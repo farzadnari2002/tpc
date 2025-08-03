@@ -195,6 +195,6 @@ class ArticleImage(models.Model):
         verbose_name = _('Article Image')
         verbose_name_plural = _("Article Images")
         ordering = ['-created_at']
-        
+        db_table = 'article_image'
 
 
