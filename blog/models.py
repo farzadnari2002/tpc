@@ -105,7 +105,7 @@ class Article(models.Model):
         ArticleCategory,
         related_name="articles",
         db_table='article_category_link',
-        verbose_name=ـ('دسته بندی های دوره')
+        verbose_name=ـ('دسته بندی های مقاله')
     )
     content = models.JSONField(verbose_name_('محتوای مقاله'))
     published_at = models.DateTimeField(auto_now_add=True,verbose_name=_('تاریخ انتشار'))
@@ -117,8 +117,8 @@ class Article(models.Model):
         return self.title
 
     class Meta:
-        verbose_name = _('Article')
-        verbose_name_plural = _('Articles')
+        verbose_name = _('مقاله')
+        verbose_name_plural = _('مقالات')
         ordering = ['-published_at']
         db_table = 'article'
         indexes = [
