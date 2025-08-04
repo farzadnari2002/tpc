@@ -86,12 +86,13 @@ class Article(models.Model):
     related_name='articles',
     verbose_name=_('نویسنده مقاله')
     )
-    title = models.CharField(max_length=250, verbose_name=('عنوان مقاله'))
-    slug = AutoSlugField(source_field='title', verbose='آدرس مقاله')
+    title = models.CharField(max_length=250, verbose_name=ـ('عنوان مقاله'))
+    slug = AutoSlugField(source_field='title', verbose_name=ـ('آدرس مقاله'))
     sv = SearchVectorField(blank=True, null=True, editable=False)
     banner = models.ImageField(
         upload_to=get_upload_banner,
         validators=[validate_image_size],
+        verbose_name=_('بنر مقاله')
 
     )
     banner_thumbnail = ImageSpecField(
@@ -100,12 +101,17 @@ class Article(models.Model):
         format='JPEG',
         options={'quality': 80}
     ) 
-    category = models.ManyToManyField(ArticleCategory, related_name="articles", db_table='article_category_link')
-    content = models.JSONField()
-    published_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    categories = models.ManyToManyField(
+        ArticleCategory,
+        related_name="articles",
+        db_table='article_category_link',
+        verbose_name=ـ('دسته بندی های دوره')
+    )
+    content = models.JSONField(verbose_name_('محتوای مقاله'))
+    published_at = models.DateTimeField(auto_now_add=True,verbose_name=_('تاریخ انتشار'))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاریخ بروزرسانی'))
     is_published = models.BooleanField(default=False, verbose_name=_('وضعیت انتشار'))
-    is_deleted = models.BooleanField(default=False)
+    is_deleted = models.BooleanField(default=False, verbose_name=_('وضعیت حذف'))
 
     def __str__(self):
         return self.title
