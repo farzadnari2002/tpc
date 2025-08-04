@@ -70,8 +70,8 @@ class ArticleCategory(MPTTModel):
         return self.name
            
     class Meta:
-        verbose_name = _('دسته بندی دوره')
-        verbose_name_plural = _('دسته بندی های دوره')
+        verbose_name = _('دسته بندی مقاله')
+        verbose_name_plural = _('دسته بندی های مقاله')
         ordering = ['name']
         db_table = 'article_category'
         indexes = [
@@ -80,9 +80,14 @@ class ArticleCategory(MPTTModel):
 
 
 class Article(models.Model):
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='articles')
-    title = models.CharField(max_length=250)
-    slug = AutoSlugField(source_field='title')
+    author = models.ForeignKey(
+    settings.AUTH_USER_MODEL,
+    on_delete=models.CASCADE,
+    related_name='articles',
+    verbose_name=_('نویسنده مقاله')
+    )
+    title = models.CharField(max_length=250, verbose_name=('عنوان مقاله'))
+    slug = AutoSlugField(source_field='title', verbose='آدرس مقاله')
     sv = SearchVectorField(blank=True, null=True, editable=False)
     banner = models.ImageField(
         upload_to=get_upload_banner,
