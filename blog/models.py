@@ -52,7 +52,7 @@ class ArticleCategory(MPTTModel):
         verbose_name=_('دسته بندی والد')
         )
     is_active = models.BooleanField(default=True, verbose_name=_('وضعیت فعال بودن/نبودن'))
-    is_special = models.BooleanField(default=False, verbose_name=_('تاریخ ایجاد'))
+    is_special = models.BooleanField(default=False, verbose_name=_('وضعیت ویژه بودن/نبودن'))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاریخ ایجاد'))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاریخ بروزرسانی'))
                  
