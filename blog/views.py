@@ -5,6 +5,11 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.permissions import IsAuthenticated
 
 
+class CategorySelectView(generics.ListAPIView):
+    serializer_class = ArticleCategorySerializer
+    queryset = ArticleCategory.objects.filter(parent=None, is_active=True, is_special=False)
+
+
 class CategoryListView(generics.ListAPIView):
     serializer_class = ArticleCategorySerializer
     queryset = ArticleCategory.objects.filter(parent=None, is_active=True)
