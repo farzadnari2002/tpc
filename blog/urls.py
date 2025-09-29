@@ -13,3 +13,9 @@ urlpatterns = [
     path('public/articles/<slug:slug>/', views.PublicArticleViewSet.as_view({'get': 'retrieve'}), name='public-articles-detail'),
     path('author/articles/', views.AuthorArticleViewset.as_view({'get':'list'}), name='author-articles-list')
 ]
+
+
+
+
+
+

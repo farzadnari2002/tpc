@@ -21,22 +21,13 @@ class PublicArticleViewSet(ReadOnlyModelViewSet):
     lookup_field = 'slug'
 
 
-class AuthorArticleViewset(ModelViewSet):
+class AuthorArticleViewset(ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = ArticleSerializer
     lookup_field = 'slug'
 
     def get_queryset(self):
-        return self.request.user.articles.all()
-    
-    def perform_create(self, serializer):
-        if self.request.user.is_staff:
-            serializer.save(author=self.request.user, status='published')
-        else:
-            serializer.save(author=self.request.user)
-
-
-    
+        return Article.objects.filter(author=self.request.user, status=Article.STATUS.PUBLISHED)
 
 
 
