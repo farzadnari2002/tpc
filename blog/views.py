@@ -46,3 +46,8 @@ class ArticleRequestViewSet(viewsets.ViewSet):
         queryset = ArticleRequest.objects.filter(author=request.user, is_deleted=False)
         serializer = self.serializer_class(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+        
+    def retrieve(self, request, pk=None):
+        queryset = get_object_or_404(CourseRequest, teacher=request.user, pk=pk, is_deleted=False)
+        serializer = self.serializer_class(queryset)
+        return Response(serializer.data, status=status.HTTP_200_OK)
