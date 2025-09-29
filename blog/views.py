@@ -51,3 +51,13 @@ class ArticleRequestViewSet(viewsets.ViewSet):
         queryset = get_object_or_404(ArticleRequest, author=request.user, pk=pk, is_deleted=False)
         serializer = self.serializer_class(queryset)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def send_request(self, request, pk=None):
+        queryset = get_object_or_404(ArticleRequest, author=request.user, pk=pk, is_deleted=False)
+        
+        check_status = bool(queryset.status in [RequestStatusChoices.DRAFT, RequestStatusChoices.NEED_REVISION])
+        if check_status:
+            queryset.status = RequestStatusChoices.PENDING
+            queryset.save()
+            return Response([_("درخواست ارسال شد.")], status=status.HTTP_200_OK)
+        return Response([_("امکان ارسال درخواست برای این وضعیت نیست.")], status=status.HTTP_400_BAD_REQUEST)
