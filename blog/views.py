@@ -30,4 +30,7 @@ class AuthorArticleViewset(ReadOnlyModelViewSet):
         return Article.objects.filter(author=self.request.user, status=Article.STATUS.PUBLISHED)
 
 
+class ArticleRequestViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = None
 
