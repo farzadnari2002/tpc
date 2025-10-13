@@ -4,6 +4,11 @@ from taggit.serializers import TagListSerializerField, TaggitSerializer
 from accounts.models import User
 
 
+class ArticleRelatedField(BaseNameRelatedField):
+    model = Article
+    display_field = 'title'
+
+
 class AuthorSerializer(serializers.ModelSerializer):
     avatar_thumbnail = serializers.ImageField(source='user_profile.avatar_thumbnail', read_only=True)
     
@@ -54,3 +59,5 @@ class ArticleSerializer(TaggitSerializer, serializers.ModelSerializer):
             'short_description': {'read_only': True},
             'status': {'read_only': True},
         }
+
+
