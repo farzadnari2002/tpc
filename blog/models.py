@@ -201,10 +201,14 @@ class ArticleRequest(models.Model):
 
 
 class ArticleImage(models.Model):
-    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='images')
+    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='images', null=True, blank=True)
     image = models.ImageField(upload_to=get_upload_images, validators=[validate_image_size])
     alt_text = models.CharField(max_length=255)
-
+    order = models.PositiveIntegerField(default=0, db_index=True)
+    upload_session = models.UUIDField(null=True, blank=True, db_index=True)
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    
     def __str__(self):
         return f"Image for {self.article}"
     
