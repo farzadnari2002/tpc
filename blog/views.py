@@ -21,16 +21,7 @@ class PublicArticleViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Article.objects.filter(status=Article.STATUS.PUBLISHED)
     serializer_class = ArticleSerializer
     lookup_field = 'slug'
-
-
-class AuthorArticleViewset(viewsets.ReadOnlyModelViewSet):
-    permission_classes = [IsAuthenticated]
-    serializer_class = ArticleSerializer
-    lookup_field = 'slug'
-
-    def get_queryset(self):
-        return Article.objects.filter(author=self.request.user, status=Article.STATUS.PUBLISHED)
-
+    
 
 class AuthorUploadImageViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
