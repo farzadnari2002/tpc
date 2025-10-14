@@ -86,8 +86,8 @@ class Article(models.Model):
     related_name='articles',
     verbose_name=_('نویسنده مقاله')
     )
-    title = models.CharField(max_length=250, verbose_name=ـ('عنوان مقاله'))
-    slug = AutoSlugField(source_field='title', verbose_name=ـ('آدرس مقاله'))
+    title = models.CharField(max_length=250, verbose_name=_('عنوان مقاله'))
+    slug = AutoSlugField(source_field='title', verbose_name=_('آدرس مقاله'))
     sv = SearchVectorField(blank=True, null=True, editable=False)
     banner = models.ImageField(
         upload_to=get_upload_banner,
@@ -105,9 +105,9 @@ class Article(models.Model):
         ArticleCategory,
         related_name="articles",
         db_table='article_category_link',
-        verbose_name=ـ('دسته بندی های مقاله')
+        verbose_name=_('دسته بندی های مقاله')
     )
-    content = models.JSONField(verbose_name_('محتوای مقاله'))
+    content = models.JSONField(verbose_name=_('محتوای مقاله'))
     published_at = models.DateTimeField(auto_now_add=True,verbose_name=_('تاریخ انتشار'))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاریخ بروزرسانی'))
     is_published = models.BooleanField(default=False, verbose_name=_('وضعیت انتشار'))
