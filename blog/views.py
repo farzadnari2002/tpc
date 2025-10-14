@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404
 from django.utils.translation.trans_null import gettext_lazy as _
 
 
-class CategorySelectView(generics.ListAPIView):
+class AuthorCategorySelectView(generics.ListAPIView):
     serializer_class = ArticleCategorySerializer
     queryset = ArticleCategory.objects.filter(parent=None, is_active=True, is_special=False)
 
@@ -44,7 +44,6 @@ class AuthorUploadImageViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
  
-
 
 class AuthorArticleRequestViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
