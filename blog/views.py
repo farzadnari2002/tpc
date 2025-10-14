@@ -1,8 +1,9 @@
-from rest_framework import generics
-from .serializers import ArticleCategorySerializer, ArticleSerializer
-from .models import *
-from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+from rest_framework import viewsets, generics, status
+from rest_framework.response import Response
+from serializers import *
+from models import *
 from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
 
 
 class CategorySelectView(generics.ListAPIView):
@@ -15,13 +16,13 @@ class CategoryListView(generics.ListAPIView):
     queryset = ArticleCategory.objects.filter(parent=None, is_active=True)
 
 
-class PublicArticleViewSet(ReadOnlyModelViewSet):
+class PublicArticleViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Article.objects.filter(status=Article.STATUS.PUBLISHED)
     serializer_class = ArticleSerializer
     lookup_field = 'slug'
 
 
-class AuthorArticleViewset(ReadOnlyModelViewSet):
+class AuthorArticleViewset(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = ArticleSerializer
     lookup_field = 'slug'
