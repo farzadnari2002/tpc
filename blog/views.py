@@ -4,6 +4,7 @@ from serializers import *
 from models import *
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
+from django.utils.translation.trans_null import gettext_lazy as _
 
 
 class CategorySelectView(generics.ListAPIView):
