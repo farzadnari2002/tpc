@@ -46,7 +46,7 @@ class AuthorUploadImageViewSet(viewsets.ViewSet):
  
 
 
-class ArticleRequestViewSet(viewsets.ViewSet):
+class AuthorArticleRequestViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = None
 
