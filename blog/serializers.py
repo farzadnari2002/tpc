@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import *
 from taggit.serializers import TagListSerializerField, TaggitSerializer
 from accounts.models import User
+from utils import BaseNameRelatedField
 
 
 class ArticleRelatedField(BaseNameRelatedField):
@@ -61,3 +62,53 @@ class ArticleSerializer(TaggitSerializer, serializers.ModelSerializer):
         }
 
 
+class AuthorUploadImageSerializer(serializers.ModelSerializer):
+    article = ArticleRelatedField(
+        queryset=Article.objects.filter(is_deleted=False),
+        required=False, allow_null=True
+    )
+    article_id = serializers.IntegerField(source='article.pk', read_only=True)
+
+    class Meta:
+        model = ArticleImage
+        fields = ('article_id' ,'article', 'id', 'image', 'alt_text', 'order', 'upload_session')
+        read_only_fields = ('id', 'article_id')
+        
+    def create(self, validated_data):
+        user = self.context['request'].user
+        article_image = ArticleImage(**validated_data, uploaded_by=user)
+        
+        try:
+            article_image.full_clean()
+            article_image.save()
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message_dict)
+        except Exception as e:
+            raise serializers.ValidationError({"error": str(e)})
+        
+        return article_image
+
+    def validate(self, attrs):
+        article = attrs.get('article', None)
+        upload_session = attrs.get('upload_session', None)
+
+        if not article and not upload_session:
+            raise serializers.ValidationError("یا article یا upload_session را بفرستید.")
+        request = self.context.get('request')
+        if article and request:
+            user = request.user
+            if article.author != user and not user.has_perm('articles.change_article'):
+                raise serializers.ValidationError("شما اجازه آپلود برای این مقاله را ندارید.")
+        return attrs
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        article_image = ArticleImage(**validated_data, uploaded_by=user)
+        try:
+            article_image.full_clean()
+            article_image.save()
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message_dict)
+        except Exception as e:
+            raise serializers.ValidationError({"error": str(e)})
+        return article_image
