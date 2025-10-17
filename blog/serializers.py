@@ -33,7 +33,7 @@ class ArticleCategorySerializer(serializers.ModelSerializer):
         return ArticleCategorySerializer(obj.childrens, many=True).data
     
 
-class ArticleSerializer(TaggitSerializer, serializers.ModelSerializer):
+class PublicArticleSerializer(TaggitSerializer, serializers.ModelSerializer):
     author = AuthorSerializer(read_only=True)
     banner_thumbnail = serializers.ImageField(read_only=True)
     tags = TagListSerializerField()
