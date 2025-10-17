@@ -108,6 +108,7 @@ class Article(models.Model):
         verbose_name=_('دسته بندی های مقاله')
     )
     content = models.JSONField(verbose_name=_('محتوای مقاله'))
+    short_description = models.TextField()
     published_at = models.DateTimeField(auto_now_add=True,verbose_name=_('تاریخ انتشار'))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاریخ بروزرسانی'))
     is_published = models.BooleanField(default=False, verbose_name=_('وضعیت انتشار'))
