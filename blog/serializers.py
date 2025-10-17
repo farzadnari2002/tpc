@@ -35,31 +35,21 @@ class ArticleCategorySerializer(serializers.ModelSerializer):
 
 class ArticleSerializer(TaggitSerializer, serializers.ModelSerializer):
     author = AuthorSerializer(read_only=True)
-    image_thumbnail = serializers.ImageField(read_only=True)
+    banner_thumbnail = serializers.ImageField(read_only=True)
     tags = TagListSerializerField()
     category = serializers.SlugRelatedField(
         many=True,
         slug_field='slug',
         queryset=ArticleCategory.objects.filter(is_active=True)
     )
-    status = serializers.ChoiceField(choices=Article.STATUS.choices,default=Article.STATUS.IN_REVIEW, read_only=True)
 
     class Meta:
         model = Article
         fields = (
-            'author','title', 'slug', 'image', 'image_thumbnail',
+            'author','title', 'slug', 'banner', 'banner_thumbnail',
             'category', 'content', 'short_description', 'tags',
-            'status', 'created_at', 'updated_at', 'published_at',
+            'created_at', 'updated_at', 'published_at',
         )
-        extra_kwargs = {
-            'created_at': {'read_only': True},
-            'updated_at': {'read_only': True},
-            'published_at': {'read_only': True},
-            'author': {'read_only': True},
-            'image_thumbnail': {'read_only': True},
-            'short_description': {'read_only': True},
-            'status': {'read_only': True},
-        }
 
 
 class AuthorUploadImageSerializer(serializers.ModelSerializer):
