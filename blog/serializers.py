@@ -75,7 +75,6 @@ class AuthorUploadImageSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(e.message_dict)
         except Exception as e:
             raise serializers.ValidationError({"error": str(e)})
-        
         return article_image
 
     def validate(self, attrs):
@@ -90,15 +89,3 @@ class AuthorUploadImageSerializer(serializers.ModelSerializer):
             if article.author != user and not user.has_perm('articles.change_article'):
                 raise serializers.ValidationError("شما اجازه آپلود برای این مقاله را ندارید.")
         return attrs
-
-    def create(self, validated_data):
-        user = self.context['request'].user
-        article_image = ArticleImage(**validated_data, uploaded_by=user)
-        try:
-            article_image.full_clean()
-            article_image.save()
-        except ValidationError as e:
-            raise serializers.ValidationError(e.message_dict)
-        except Exception as e:
-            raise serializers.ValidationError({"error": str(e)})
-        return article_image
