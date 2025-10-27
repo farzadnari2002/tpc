@@ -89,3 +89,18 @@ class AuthorUploadImageSerializer(serializers.ModelSerializer):
             if article.author != user and not user.has_perm('articles.change_article'):
                 raise serializers.ValidationError("شما اجازه آپلود برای این مقاله را ندارید.")
         return attrs
+    
+
+class AuthorArticleRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ArticleRequest
+        fields = (
+            'id', 'target_id', 'action',
+            'status', 'comments', 'admin_response',
+            'data',
+        )
+        extra_kwargs = {
+            'status': {'read_only': True},
+            'admin_response': {'read_only': True},
+        }
+        
