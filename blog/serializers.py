@@ -104,3 +104,16 @@ class AuthorArticleRequestSerializer(serializers.ModelSerializer):
             'admin_response': {'read_only': True},
         }
         
+    def create(self, validated_data):
+        user = self.context['request'].user
+        
+        article_request = ArticleRequest(**validated_data, author=user)
+        
+        try:
+            article_request.full_clean()
+            article_request.save()
+        except ValidationError as e:
+            raise serializers.ValidationError(e.message_dict)
+        except Exception as e:
+            raise serializers.ValidationError({"error": str(e)})
+        
