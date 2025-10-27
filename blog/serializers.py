@@ -117,3 +117,8 @@ class AuthorArticleRequestSerializer(serializers.ModelSerializer):
         except Exception as e:
             raise serializers.ValidationError({"error": str(e)})
         
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['action'] = instance.get_action_display()
+        representation['status'] = instance.get_status_display()
+        return representation
