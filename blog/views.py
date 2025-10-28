@@ -8,7 +8,7 @@ from django.utils.translation.trans_null import gettext_lazy as _
 
 
 class AuthorCategorySelectView(generics.ListAPIView):
-    serializer_class = ArticleCategorySerializer
+    serializer_class = CategoryHierarchySerializer
     queryset = ArticleCategory.objects.filter(parent=None, is_active=True, is_special=False)
 
 
