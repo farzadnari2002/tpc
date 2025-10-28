@@ -13,7 +13,7 @@ class AuthorCategorySelectView(generics.ListAPIView):
 
 
 class PublicCategoryListView(generics.ListAPIView):
-    serializer_class = ArticleCategorySerializer
+    serializer_class = CategoryHierarchySerializer
     queryset = ArticleCategory.objects.filter(parent=None, is_active=True)
 
 
