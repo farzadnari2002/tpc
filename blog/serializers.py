@@ -19,9 +19,14 @@ class AuthorSerializer(serializers.ModelSerializer):
 
 
 class CategoryHierarchySerializer(serializers.ModelSerializer):
+    """
+    This serializer is used to display the hierarchy of all categories,
+    including parent and child categories. It helps users understand
+    the structure of categories within the system.
+    """
+    
+    children = serializers.SerializerMethodField()
     parent_slug = serializers.SerializerMethodField()
-    childrens = serializers.SerializerMethodField()
-
     class Meta:
         model = ArticleCategory
         fields = ['name', 'slug', 'parent_slug', 'childrens']
