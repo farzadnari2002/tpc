@@ -35,8 +35,9 @@ class CategoryHierarchySerializer(serializers.ModelSerializer):
     def get_parent_slug(self, obj):
         return obj.parent.slug if obj.parent else None
     
-    def get_childrens(self, obj):
-        return ArticleCategorySerializer(obj.childrens, many=True).data
+    def get_children(self, obj):
+        children = getattr(obj, 'prefetched_children', [])
+        return CategoryHierarchySerializer(children, many=True).data
     
 
 class PublicArticleSerializer(TaggitSerializer, serializers.ModelSerializer):
