@@ -24,12 +24,13 @@ class CategoryHierarchySerializer(serializers.ModelSerializer):
     including parent and child categories. It helps users understand
     the structure of categories within the system.
     """
-    
+
     children = serializers.SerializerMethodField()
     parent_slug = serializers.SerializerMethodField()
+
     class Meta:
         model = ArticleCategory
-        fields = ['name', 'slug', 'parent_slug', 'childrens']
+        fields = ['name', 'slug', 'parent_slug', 'children']
 
     def get_parent_slug(self, obj):
         return obj.parent.slug if obj.parent else None
