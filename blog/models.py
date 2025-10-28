@@ -48,7 +48,7 @@ class ArticleCategory(MPTTModel):
         'self',
         on_delete=models.CASCADE,
         null=True, blank=True,
-        related_name='childrens',
+        related_name='children',
         verbose_name=_('دسته بندی والد')
         )
     is_active = models.BooleanField(default=True, verbose_name=_('وضعیت فعال بودن/نبودن'))
