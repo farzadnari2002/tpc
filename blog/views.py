@@ -38,7 +38,7 @@ class AuthorUploadImageViewSet(viewsets.ViewSet):
 
 class AuthorArticleRequestViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
-    serializer_class = None
+    serializer_class = AuthorArticleRequestSerializer
 
     def create(self, request):
         serializer = self.serializer_class(data=request.data, context={'request':request})
