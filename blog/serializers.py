@@ -18,7 +18,7 @@ class AuthorSerializer(serializers.ModelSerializer):
         fields = ['id', 'first_name', 'last_name', 'avatar_thumbnail']
 
 
-class ArticleCategorySerializer(serializers.ModelSerializer):
+class CategoryHierarchySerializer(serializers.ModelSerializer):
     parent_slug = serializers.SerializerMethodField()
     childrens = serializers.SerializerMethodField()
 
