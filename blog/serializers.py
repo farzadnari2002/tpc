@@ -70,6 +70,24 @@ class PublicArticleDetailSerializer(TaggitSerializer, serializers.ModelSerialize
         )
 
 
+class AuthorArticleDetailSerializer(TaggitSerializer, serializers.ModelSerializer):
+    author = AuthorSerializer(read_only=True)
+    tags = TagListSerializerField()
+    category = serializers.SlugRelatedField(
+        many=True,
+        slug_field='slug',
+        queryset=ArticleCategory.objects.filter(is_active=True)
+    )
+
+    class Meta:
+        model = Article
+        fields = (
+            'author','title', 'slug', 'banner','category', 
+            'content', 'tags', 'published_at', 'updated_at',
+        )
+
+
+
 class AuthorUploadImageSerializer(serializers.ModelSerializer):
     article = ArticleRelatedField(
         queryset=Article.objects.filter(is_deleted=False),
