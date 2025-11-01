@@ -40,22 +40,16 @@ class CategoryHierarchySerializer(serializers.ModelSerializer):
         return CategoryHierarchySerializer(children, many=True).data
     
 
-class PublicArticleSerializer(TaggitSerializer, serializers.ModelSerializer):
+class PublicArticleListSerializer(TaggitSerializer, serializers.ModelSerializer):
     author = AuthorSerializer(read_only=True)
     banner_thumbnail = serializers.ImageField(read_only=True)
-    tags = TagListSerializerField()
-    category = serializers.SlugRelatedField(
-        many=True,
-        slug_field='slug',
-        queryset=ArticleCategory.objects.filter(is_active=True)
-    )
+
 
     class Meta:
         model = Article
         fields = (
-            'author','title', 'slug', 'banner', 'banner_thumbnail',
-            'category', 'content', 'short_description', 'tags',
-            'created_at', 'updated_at', 'published_at',
+            'author','title', 'slug', 'banner_thumbnail',
+            'category', 'short_description', 'tags', 'published_at',
         )
 
 

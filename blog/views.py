@@ -109,3 +109,4 @@ class AuthorArticleRequestViewSet(viewsets.ViewSet):
                 raise serializers.ValidationError(str(e))
             return Response([_("با موفقیت حذف شد.")], status=status.HTTP_204_NO_CONTENT)
         return Response([_("امکان حذف ممکن نیست")], status=status.HTTP_400_BAD_REQUEST)
+    
