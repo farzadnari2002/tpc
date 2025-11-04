@@ -54,7 +54,7 @@ class PublicArticleListSerializer(TaggitSerializer, serializers.ModelSerializer)
 
 
 class PublicArticleDetailSerializer(TaggitSerializer, serializers.ModelSerializer):
-    author = AuthorSerializer(read_only=True)
+    author = serializers.SerializerMethodField(read_only=True)
     tags = TagListSerializerField()
     category = serializers.SlugRelatedField(
         many=True,
@@ -68,6 +68,12 @@ class PublicArticleDetailSerializer(TaggitSerializer, serializers.ModelSerialize
             'author','title', 'slug', 'banner','category', 
             'content', 'tags', 'published_at',
         )
+
+    def get_author(self, obj):
+        return {
+            "full_name": f"{obj.author_first_name.strip()} {obj.author_last_name.strip()}",
+            "username": getattr(obj, "author_username", None)
+        }
 
 
 class AuthorArticleDetailSerializer(TaggitSerializer, serializers.ModelSerializer):
@@ -85,7 +91,6 @@ class AuthorArticleDetailSerializer(TaggitSerializer, serializers.ModelSerialize
             'author','title', 'slug', 'banner','category', 
             'content', 'tags', 'published_at', 'updated_at',
         )
-
 
 
 class AuthorUploadImageSerializer(serializers.ModelSerializer):
