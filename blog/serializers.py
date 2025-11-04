@@ -54,18 +54,14 @@ class PublicArticleListSerializer(TaggitSerializer, serializers.ModelSerializer)
 
 
 class PublicArticleDetailSerializer(TaggitSerializer, serializers.ModelSerializer):
-    author = serializers.SerializerMethodField(read_only=True)
+    author = serializers.SerializerMethodField()
     tags = TagListSerializerField()
-    category = serializers.SlugRelatedField(
-        many=True,
-        slug_field='slug',
-        queryset=ArticleCategory.objects.filter(is_active=True)
-    )
+    categories = serializers.SerializerMethodField()
 
     class Meta:
         model = Article
         fields = (
-            'author','title', 'slug', 'banner','category', 
+            'author','title', 'slug', 'banner','categories', 
             'content', 'tags', 'published_at',
         )
 
@@ -74,6 +70,9 @@ class PublicArticleDetailSerializer(TaggitSerializer, serializers.ModelSerialize
             "full_name": f"{obj.author_first_name.strip()} {obj.author_last_name.strip()}",
             "username": getattr(obj, "author_username", None)
         }
+    
+    def get_categories(self, obj):
+        return list(obj.prefetched_categories.values("title", "slug"))
 
 
 class AuthorArticleDetailSerializer(TaggitSerializer, serializers.ModelSerializer):
