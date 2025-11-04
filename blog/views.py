@@ -5,6 +5,7 @@ from models import *
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.utils.translation.trans_null import gettext_lazy as _
+from django.db.models import Q, Prefetch, Count, F, Exists, OuterRef
 
 
 class AuthorCategorySelectView(generics.ListAPIView):
@@ -20,6 +21,35 @@ class PublicCategoryListView(generics.ListAPIView):
 class PublicArticleListViewSet(generics.ListAPIView):
     queryset = Article.objects.filter(status=Article.STATUS.PUBLISHED, is_deleted=False)
     serializer_class = PublicArticleListSerializer
+    lookup_field = 'slug'
+
+
+class PublicArticleDetailViewSet(generics.RetrieveAPIView):
+    queryset = Article.objects.filter(
+        is_published=True,
+        is_deleted=False  
+    ).annotate(
+        has_active_category=Exists(
+            ArticleCategory.objects.filter(
+                is_active=True,
+                articles=OuterRef('pk')
+            )
+        )
+    ).filter(
+        has_active_category=True
+    ).annotate(
+        author_username=F('author__user_profile__employee_profile__username'),
+        author_first_name=F('author__first_name'),
+        author_last_name=F('author__last_name')
+    ).prefetch_related(
+        'tags',
+        Prefetch(
+            'categories',
+            queryset=ArticleCategory.objects.filter(is_active=True),
+            to_attr='prefetched_categories'
+        )
+    )
+    serializer_class = PublicArticleDetailSerializer
     lookup_field = 'slug'
     
 
