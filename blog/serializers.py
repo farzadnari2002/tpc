@@ -49,7 +49,7 @@ class PublicArticleListSerializer(TaggitSerializer, serializers.ModelSerializer)
         model = Article
         fields = (
             'author','title', 'slug', 'banner_thumbnail',
-            'category', 'short_description', 'tags', 'published_at',
+            'short_description', 'tags', 'published_at',
         )
 
 
