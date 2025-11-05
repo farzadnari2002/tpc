@@ -19,7 +19,16 @@ class PublicCategoryListView(generics.ListAPIView):
 
 
 class PublicArticleListViewSet(generics.ListAPIView):
-    queryset = Article.objects.filter(status=Article.STATUS.PUBLISHED, is_deleted=False)
+    queryset = Article.objects.filter(
+        is_published=True,
+        is_deleted=False
+    ).annotate(
+        author_username=F('author__user_profile__employee_profile__username'),
+        author_first_name=F('author__first_name'),
+        author_last_name=F('author__last_name')
+    ).prefetch_related(
+        'tags'
+    )
     serializer_class = PublicArticleListSerializer
     lookup_field = 'slug'
 
