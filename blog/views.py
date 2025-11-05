@@ -10,7 +10,15 @@ from django.db.models import Q, Prefetch, Count, F, Exists, OuterRef
 
 class AuthorCategorySelectView(generics.ListAPIView):
     serializer_class = CategoryHierarchySerializer
-    queryset = ArticleCategory.objects.filter(parent=None, is_active=True, is_special=False)
+    queryset = ArticleCategory.objects.filter(
+        parent=None, is_active=True
+    ).prefetch_related(
+            Prefetch(
+                'children',
+                queryset=ArticleCategory.objects.filter(is_active=True).order_by('lft'),
+                to_attr='prefetched_children'
+            )
+    ).order_by('lft')
 
 
 class PublicCategoryListView(generics.ListAPIView):
