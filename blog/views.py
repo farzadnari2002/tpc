@@ -26,8 +26,6 @@ class PublicArticleListViewSet(generics.ListAPIView):
         author_username=F('author__user_profile__employee_profile__username'),
         author_first_name=F('author__first_name'),
         author_last_name=F('author__last_name')
-    ).prefetch_related(
-        'tags'
     )
     serializer_class = PublicArticleListSerializer
     lookup_field = 'slug'
