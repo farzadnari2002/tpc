@@ -41,16 +41,21 @@ class CategoryHierarchySerializer(serializers.ModelSerializer):
     
 
 class PublicArticleListSerializer(TaggitSerializer, serializers.ModelSerializer):
-    author = AuthorSerializer(read_only=True)
+    author = serializers.SerializerMethodField()
     banner_thumbnail = serializers.ImageField(read_only=True)
-
 
     class Meta:
         model = Article
         fields = (
             'author','title', 'slug', 'banner_thumbnail',
-            'short_description', 'tags', 'published_at',
+            'short_description', 'published_at',
         )
+
+    def get_author(self, obj):
+        return {
+            "full_name": f"{obj.author_first_name.strip()} {obj.author_last_name.strip()}",
+            "username": getattr(obj, "author_username", None)
+        }       
 
 
 class PublicArticleDetailSerializer(TaggitSerializer, serializers.ModelSerializer):
