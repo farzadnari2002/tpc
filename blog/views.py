@@ -23,7 +23,15 @@ class AuthorCategorySelectView(generics.ListAPIView):
 
 class PublicCategoryListView(generics.ListAPIView):
     serializer_class = CategoryHierarchySerializer
-    queryset = ArticleCategory.objects.filter(parent=None, is_active=True)
+    queryset = ArticleCategory.objects.filter(
+        parent=None, is_active=True
+    ).prefetch_related(
+            Prefetch(
+                'children',
+                queryset=ArticleCategory.objects.filter(is_active=True).order_by('lft'),
+                to_attr='prefetched_children'
+            )
+    ).order_by('lft')
 
 
 class PublicArticleListViewSet(generics.ListAPIView):
