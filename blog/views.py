@@ -74,6 +74,14 @@ class PublicArticleDetailViewSet(generics.RetrieveAPIView):
     )
     serializer_class = PublicArticleDetailSerializer
     lookup_field = 'slug'
+
+
+class AuthorArticleListViewSet(generics.ListAPIView):
+    serializer_class = PublicArticleListSerializer
+    permission_classes = [IsAuthenticated]  
+
+    def get_queryset(self):
+        return Article.objects.filter(is_deleted=False, teacher=self.request.user)
     
 
 class AuthorUploadImageViewSet(viewsets.ViewSet):
