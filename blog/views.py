@@ -83,6 +83,14 @@ class AuthorArticleListViewSet(generics.ListAPIView):
         return Article.objects.filter(is_deleted=False, teacher=self.request.user)
     
 
+class AuthorArticleDetailView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = AuthorArticleDetailSerializer
+    
+    def get_queryset(self):
+        return Article.objects.filter(is_deleted=False, author=self.request.user)
+    
+
 class AuthorUploadImageViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = AuthorUploadImageSerializer
