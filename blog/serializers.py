@@ -80,6 +80,17 @@ class PublicArticleDetailSerializer(TaggitSerializer, serializers.ModelSerialize
         return list(obj.prefetched_categories.values("title", "slug"))
 
 
+class AuthorArticleListSerializer(TaggitSerializer, serializers.ModelSerializer):
+    banner_thumbnail = serializers.ImageField(read_only=True)
+
+    class Meta:
+        model = Article
+        fields = (
+            'title', 'slug', 'banner_thumbnail', 'is_published'
+            'short_description', 'published_at',
+        )
+
+
 class AuthorArticleDetailSerializer(TaggitSerializer, serializers.ModelSerializer):
     author = AuthorSerializer(read_only=True)
     tags = TagListSerializerField()
