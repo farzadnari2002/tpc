@@ -76,8 +76,8 @@ class PublicArticleDetailViewSet(generics.RetrieveAPIView):
 
 
 class AuthorArticleListViewSet(generics.ListAPIView):
-    serializer_class = PublicArticleListSerializer
-    permission_classes = [IsAuthenticated]  
+    serializer_class = AuthorArticleListSerializer
+    permission_classes = [IsAuthenticated] 
 
     def get_queryset(self):
         return Article.objects.filter(is_deleted=False, teacher=self.request.user)
