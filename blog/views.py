@@ -44,7 +44,7 @@ class PublicArticleListViewSet(generics.ListAPIView):
         author_last_name=F('author__last_name')
     )
     serializer_class = PublicArticleListSerializer
-    lookup_field = 'slug'
+
 
 
 class PublicArticleDetailViewSet(generics.RetrieveAPIView):
