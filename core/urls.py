@@ -11,6 +11,9 @@ urlpatterns = [
     
     path('courses/', include('courses.urls.public_urls')),
     path('teacher/', include('courses.urls.teacher_urls')),
+
+    path('articles/', include('blog.urls.public_urls')),
+    path('author/', include('blog.urls.author_urls')),
     
     path('comments/', include('comments.urls')),
 
