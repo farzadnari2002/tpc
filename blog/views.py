@@ -34,7 +34,7 @@ class PublicCategoryListView(generics.ListAPIView):
     ).order_by('lft')
 
 
-class PublicArticleListViewSet(generics.ListAPIView):
+class PublicArticleListView(generics.ListAPIView):
     queryset = Article.objects.filter(
         is_published=True,
         is_deleted=False
@@ -75,7 +75,7 @@ class PublicArticleDetailViewSet(generics.RetrieveAPIView):
     lookup_field = 'slug'
 
 
-class AuthorArticleListViewSet(generics.ListAPIView):
+class AuthorArticleListView(generics.ListAPIView):
     serializer_class = AuthorArticleListSerializer
     permission_classes = [IsAuthenticated] 
 
