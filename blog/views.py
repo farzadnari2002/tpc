@@ -8,7 +8,7 @@ from django.utils.translation.trans_null import gettext_lazy as _
 from django.db.models import Q, Prefetch, Count, F, Exists, OuterRef
 
 
-class AuthorCategorySelectView(generics.ListAPIView):
+class PublicCategoryListView(generics.ListAPIView):
     serializer_class = CategoryHierarchySerializer
     queryset = ArticleCategory.objects.filter(
         parent=None, is_active=True
@@ -21,7 +21,7 @@ class AuthorCategorySelectView(generics.ListAPIView):
     ).order_by('lft')
 
 
-class PublicCategoryListView(generics.ListAPIView):
+class AuthorCategoryListView(generics.ListAPIView):
     serializer_class = CategoryHierarchySerializer
     queryset = ArticleCategory.objects.filter(
         parent=None, is_active=True
