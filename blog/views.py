@@ -88,7 +88,17 @@ class AuthorArticleDetailView(generics.RetrieveAPIView):
     serializer_class = AuthorArticleDetailSerializer
     
     def get_queryset(self):
-        return Article.objects.filter(is_deleted=False, author=self.request.user)
+        return Article.objects.filter(
+        is_published=True,
+        author=self.request.user 
+    ).prefetch_related(
+        'tags',
+        Prefetch(
+            'categories',
+            queryset=ArticleCategory.objects.all(),
+            to_attr='prefetched_categories'
+        )
+    )
     
 
 class AuthorUploadImageViewSet(viewsets.ViewSet):
