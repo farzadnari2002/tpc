@@ -46,7 +46,7 @@ class PublicArticleListView(generics.ListAPIView):
     serializer_class = PublicArticleListSerializer
 
 
-class PublicArticleDetailViewSet(generics.RetrieveAPIView):
+class PublicArticleDetailView(generics.RetrieveAPIView):
     queryset = Article.objects.filter(
         is_published=True,
         is_deleted=False  
