@@ -80,7 +80,7 @@ class AuthorArticleListViewSet(generics.ListAPIView):
     permission_classes = [IsAuthenticated] 
 
     def get_queryset(self):
-        return Article.objects.filter(is_deleted=False, teacher=self.request.user)
+        return Article.objects.filter(is_deleted=False, author=self.request.user)
     
 
 class AuthorArticleDetailView(generics.RetrieveAPIView):
