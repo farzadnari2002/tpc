@@ -89,7 +89,7 @@ class AuthorArticleDetailView(generics.RetrieveAPIView):
     
     def get_queryset(self):
         return Article.objects.filter(
-        is_published=True,
+        is_deleted=False,
         author=self.request.user 
     ).prefetch_related(
         'tags',
