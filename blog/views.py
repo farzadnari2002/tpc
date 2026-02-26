@@ -1,7 +1,7 @@
 from rest_framework import viewsets, generics, status
 from rest_framework.response import Response
-from .serializers import *
-from models import *
+from blog.serializers import *
+from blog.models import *
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.utils.translation.trans_null import gettext_lazy as _
