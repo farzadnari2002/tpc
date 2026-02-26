@@ -1,6 +1,6 @@
 from rest_framework import viewsets, generics, status
 from rest_framework.response import Response
-from serializers import *
+from .serializers import *
 from models import *
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
