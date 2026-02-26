@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from blog.models import *
+from .models import *
 from taggit.serializers import TagListSerializerField, TaggitSerializer
 from accounts.models import User
 from utils import BaseNameRelatedField
