@@ -10,12 +10,12 @@ class ArticleRelatedField(BaseNameRelatedField):
     display_field = 'title'
 
 
-class AuthorSerializer(serializers.ModelSerializer):
-    avatar_thumbnail = serializers.ImageField(source='user_profile.avatar_thumbnail', read_only=True)
+# class AuthorSerializer(serializers.ModelSerializer):
+#     avatar_thumbnail = serializers.ImageField(source='user_profile.avatar_thumbnail', read_only=True)
     
-    class Meta:
-        model = User
-        fields = ['id', 'first_name', 'last_name', 'avatar_thumbnail']
+#     class Meta:
+#         model = User
+#         fields = ['id', 'first_name', 'last_name', 'avatar_thumbnail']
 
 
 class CategoryHierarchySerializer(serializers.ModelSerializer):
