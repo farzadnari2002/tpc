@@ -3,7 +3,7 @@ from blog import views
 
 
 urlpatterns = [
-    path('categories/', views.CategoryListView.as_view(),name='category-list'),
+    path('categories/', views.PublicCategoryListView.as_view(),name='category-list'),
     path('', views.PublicArticleListView.as_view({'get': 'list'}), name='article-list'),
     re_path(
         r'^(?P<slug>[\w\-آ-ی]+)/?$',
