@@ -4,10 +4,10 @@ from blog import views
 
 urlpatterns = [
     path('categories/', views.PublicCategoryListView.as_view(),name='category-list'),
-    path('', views.PublicArticleListView.as_view({'get': 'list'}), name='article-list'),
+    path('', views.PublicArticleListView.as_view(), name='article-list'),
     re_path(
         r'^(?P<slug>[\w\-آ-ی]+)/?$',
-        views.PublicArticleDetailView.as_view({'get': 'retrieve'}),
+        views.PublicArticleDetailView.as_view(),
         name='article-detail'
     ),
 ]
