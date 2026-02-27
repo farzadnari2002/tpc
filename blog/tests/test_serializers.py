@@ -1,6 +1,6 @@
 from django.test import TestCase
-from blog.models import Article
-from blog.serializers import ArticleRelatedField
+from blog.models import Article, ArticleCategory
+from blog.serializers import ArticleRelatedField, CategoryHierarchySerializer
 import tempfile
 from PIL import Image
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -36,5 +36,48 @@ class TestArticleRelatedField(TestCase):
     def test_to_representation_returns_title(self):
         representation = self.field.to_representation(self.article)
         self.assertEqual(representation, self.article.title)
+
+
+class TestCategoryHierarchySerializer(TestCase):
+    def setUp(self):
+        self.category_root = ArticleCategory.objects.create(name="Root Category", slug="root-category")
+        self.category_child_1 = ArticleCategory.objects.create(name="Child 1", slug="child-1", parent=self.category_root)
+        self.category_child_2 = ArticleCategory.objects.create(name="Child 2", slug="child-2", parent=self.category_root)
+        self.category_grandchild = ArticleCategory.objects.create(name="Grandchild", slug="grandchild", parent=self.category_child_1)
+        self.category_root.prefetched_children = [self.category_child_1, self.category_child_2]
+        self.category_child_1.prefetched_children = [self.category_grandchild]
+        self.category_child_2.prefetched_children = []
+        self.category_grandchild.prefetched_children = []
+
+    def test_simple_fields(self):
+        serializer = CategoryHierarchySerializer(self.category_root)
+        data = serializer.data
+
+        self.assertEqual(data['name'], self.category_root.name)
+        self.assertEqual(data['slug'], self.category_root.slug)
+        self.assertIsNone(data['parent_slug'])
+
+    def test_hierarchy_serialization(self):
+        serializer = CategoryHierarchySerializer(self.category_root)
+        data = serializer.data
+        children_data = data['children']
+
+        self.assertEqual(len(children_data), 2)
+        self.assertEqual(children_data[0]['name'], self.category_child_1.name)
+        self.assertEqual(children_data[0]['slug'], self.category_child_1.slug)
+        self.assertEqual(children_data[0]['parent_slug'], self.category_root.slug)
+
+
+        self.assertEqual(children_data[1]['name'], self.category_child_2.name)
+        self.assertEqual(children_data[1]['slug'], self.category_child_2.slug)
+        self.assertEqual(children_data[1]['parent_slug'], self.category_root.slug)
+
+        grandchild_data = children_data[0]['children']
+        self.assertEqual(len(grandchild_data), 1)
+        self.assertEqual(grandchild_data[0]['name'], self.category_grandchild.name)
+        self.assertEqual(grandchild_data[0]['slug'], self.category_grandchild.slug)
+        self.assertEqual(grandchild_data[0]['parent_slug'], self.category_child_1.slug)
+        self.assertEqual(grandchild_data[0]['children'], [])
+
 
 
