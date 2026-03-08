@@ -140,6 +140,7 @@ class TestPublicArticleListSerializer(TestCase):
         self.assertEqual(data['short_description'], self.article.short_description)
         self.assertEqual(data['author']['full_name'], f"{self.article.author_first_name} {self.article.author_last_name}")
         self.assertEqual(data['author']['username'], self.article.author_username)
+        self.assertIn('published_at', data)
     
     def test_author_full_name_strips_whitespace(self):
         self.user.first_name = "  ali  "
@@ -167,6 +168,20 @@ class TestPublicArticleListSerializer(TestCase):
         data = serializer.data
         self.assertEqual(data['author']['full_name'], " ")
         self.assertIsNone(data['author']['username'])
-          
 
+    def test_handle_empty_values(self):
+        self.article.title = ""
+        self.article.slug = ""
+        self.article.short_description = ""
+        self.article.content = {} 
+        self.article.save()
+        serializer = PublicArticleListSerializer(self.article)
+        data = serializer.data
+        self.assertEqual(data['title'], "")
+        self.assertEqual(data['slug'], "")
+        self.assertEqual(data['short_description'], "")
 
+    def test_banner_thumbnail(self):
+        serializer = PublicArticleListSerializer(self.article)
+        data = serializer.data
+        self.assertIsInstance(data['banner_thumbnail'], str)
