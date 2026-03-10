@@ -31,7 +31,7 @@ class AuthorCategoryListView(generics.ListAPIView):
                 queryset=ArticleCategory.objects.filter(is_active=True).order_by('lft'),
                 to_attr='prefetched_children'
             )
-    ).order_by('lft')
+    ).order_by('priority', 'lft')
 
 
 class PublicArticleListView(generics.ListAPIView):

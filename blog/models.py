@@ -51,6 +51,13 @@ class ArticleCategory(MPTTModel):
         related_name='children',
         verbose_name=_('دسته بندی والد')
         )
+    # help_text test
+    priority = models.PositiveSmallIntegerField(
+        default=0, 
+        blank=True, 
+        verbose_name=_('اولویت نمایش'),
+        help_text=_('هر چه عدد کمتر باشد، در لیست بالاتر نمایش داده می‌شود')
+    )
     is_active = models.BooleanField(default=True, verbose_name=_('وضعیت فعال بودن/نبودن'))
     is_special = models.BooleanField(default=False, verbose_name=_('وضعیت ویژه بودن/نبودن'))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاریخ ایجاد'))
@@ -72,7 +79,7 @@ class ArticleCategory(MPTTModel):
     class Meta:
         verbose_name = _('دسته بندی مقاله')
         verbose_name_plural = _('دسته بندی های مقاله')
-        ordering = ['name']
+        ordering = ['priority', 'id', 'created_at']
         db_table = 'article_category'
         indexes = [
             models.Index(fields=['slug'])
@@ -107,6 +114,7 @@ class Article(models.Model):
         db_table='article_category_link',
         verbose_name=_('دسته بندی های مقاله')
     )
+    tags = TaggableManager(verbose_name=_('برچسب ها'))
     content = models.JSONField(verbose_name=_('محتوای مقاله'))
     short_description = models.TextField()
     # check published_at field

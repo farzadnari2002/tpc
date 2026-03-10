@@ -46,6 +46,7 @@ class PublicArticleListSerializer(TaggitSerializer, serializers.ModelSerializer)
 
     class Meta:
         model = Article
+        # categories in fields?
         fields = (
             'author','title', 'slug', 'banner_thumbnail',
             'short_description', 'published_at',
