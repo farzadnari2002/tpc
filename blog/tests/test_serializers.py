@@ -1,6 +1,6 @@
 from django.test import TestCase
 from blog.models import Article, ArticleCategory
-from blog.serializers import ArticleRelatedField, CategoryHierarchySerializer, PublicArticleListSerializer
+from blog.serializers import ArticleRelatedField, CategoryHierarchySerializer, PublicArticleListSerializer, PublicArticleDetailSerializer
 import tempfile
 from PIL import Image
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -237,14 +237,9 @@ class TestPublicArticleDetailSerializer(TestCase):
             author_last_name=F('author__last_name'),
             author_username=F('author__user_profile__employee_profile__username')
         ).first()
-        self.category1 = ArticleCategory.objects.create(name="news")
-        self.category2 = ArticleCategory.objects.create(name="it")
-        self.category3 = ArticleCategory.objects.create(name="programming")
-        self.article.categories.add(self.category1, self.category2, self.category3)
-        self.article.prefetched_categories = self.article.categories.all()
 
-    def test_serializer_fields(self):
-        serializer = PublicArticleListSerializer(self.article)
+    def test_simple_fields(self):
+        serializer = PublicArticleDetailSerializer(self.article)
         data = serializer.data
         self.assertEqual(data['title'], self.article.title)
         self.assertEqual(data['slug'], self.article.slug)
@@ -252,6 +247,51 @@ class TestPublicArticleDetailSerializer(TestCase):
         self.assertEqual(data['author']['full_name'], f"{self.article.author_first_name} {self.article.author_last_name}")
         self.assertEqual(data['author']['username'], self.article.author_username)
         self.assertIn('published_at', data)
-        actual_categories = self.article.prefetched_categories.all()
+        self.article.prefetched_categories = self.article.categories.all()
+
+    def test_category_field(self):
+        self.category1 = ArticleCategory.objects.create(name="news")
+        self.category2 = ArticleCategory.objects.create(name="it")
+        self.category3 = ArticleCategory.objects.create(name="programming")
+        self.article.categories.add(self.category1, self.category2, self.category3)
+        self.article.prefetched_categories = self.article.categories.all()
+        serializer = PublicArticleDetailSerializer(self.article)
+        data = serializer.data
+        actual_categories = data.categories
         expected_categories = [self.category1, self.category2, self.category3]
         self.assertCountEqual(actual_categories, expected_categories)
+
+    # def test_categories_priority(self):
+    #     self.category1 = ArticleCategory.objects.create(name="aaa")
+    #     self.category2 = ArticleCategory.objects.create(name="bbb", priority=1)
+    #     self.category3 = ArticleCategory.objects.create(name="ccc")
+    #     self.category4 = ArticleCategory.objects.create(name="ddd", priority=2)
+    #     self.category5 = ArticleCategory.objects.create(name="eee", priority=0)
+    #     self.category6 = ArticleCategory.objects.create(name="fff", priority=3)
+    #     self.category7 = ArticleCategory.objects.create(name="ggg", priority=8)
+    #     self.category8 = ArticleCategory.objects.create(name="hhh", priority=3)
+    #     self.article.categories.set([
+    #         self.category1,
+    #         self.category2,
+    #         self.category3,
+    #         self.category4,
+    #         self.category5,
+    #         self.category6,
+    #         self.category7,
+    #         self.category8 
+    #     ])
+    #     actual_categories = self.article.prefetched_categories.all()
+    #     expected_categories = [
+    #         self.category1,
+    #         self.category2,
+    #         self.category3,
+    #         self.category4,
+    #         self.category5,
+    #         self.category6,
+    #         self.category7,
+    #         self.category8
+    #     ]
+    #     self.assertCountEqual(actual_categories, expected_categories)
+
+
+

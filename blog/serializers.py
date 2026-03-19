@@ -78,7 +78,7 @@ class PublicArticleDetailSerializer(TaggitSerializer, serializers.ModelSerialize
         }
     
     def get_categories(self, obj):
-        return list(obj.prefetched_categories.values("title", "slug"))
+        return list(obj.prefetched_categories.values("name", "slug"))
 
 
 class AuthorArticleListSerializer(TaggitSerializer, serializers.ModelSerializer):
