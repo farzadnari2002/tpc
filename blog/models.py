@@ -53,7 +53,7 @@ class ArticleCategory(MPTTModel):
         )
     # help_text test
     priority = models.PositiveSmallIntegerField(
-        default=0, 
+        null=True, 
         blank=True, 
         verbose_name=_('اولویت نمایش'),
         help_text=_('هر چه عدد کمتر باشد، در لیست بالاتر نمایش داده می‌شود')

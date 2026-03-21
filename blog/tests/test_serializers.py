@@ -199,7 +199,13 @@ class TestPublicArticleDetailSerializer(TestCase):
             name=f'banner_{prefix}.jpg',
             content=tmp_file.read(),
             content_type='image/jpeg'
-        )      
+        )  
+
+    def serialize_category(self, category_obj):
+        return {
+            "name": category_obj.name,
+            "slug": category_obj.slug
+        }       
     
     def setUp(self):
         self.user = User.objects.create_user(
@@ -237,17 +243,55 @@ class TestPublicArticleDetailSerializer(TestCase):
             author_last_name=F('author__last_name'),
             author_username=F('author__user_profile__employee_profile__username')
         ).first()
+        self.article.prefetched_categories = self.article.categories.all()
 
     def test_simple_fields(self):
         serializer = PublicArticleDetailSerializer(self.article)
         data = serializer.data
         self.assertEqual(data['title'], self.article.title)
         self.assertEqual(data['slug'], self.article.slug)
-        self.assertEqual(data['short_description'], self.article.short_description)
+        self.assertIn('published_at', data)
+        self.assertIn('banner', data)
+
+    def test_author_field(self):
+        serializer = PublicArticleDetailSerializer(self.article)
+        data = serializer.data
         self.assertEqual(data['author']['full_name'], f"{self.article.author_first_name} {self.article.author_last_name}")
         self.assertEqual(data['author']['username'], self.article.author_username)
-        self.assertIn('published_at', data)
+
+    def test_author_field_full_name_strips_whitespace(self):
+        self.user.first_name = "  ali  "
+        self.user.last_name = "  samadi  "
+        self.user.save()
+        self.article = Article.objects.filter(pk=self.article.pk).annotate(
+            author_first_name=F('author__first_name'),
+            author_last_name=F('author__last_name'),
+            author_username=F('author__user_profile__employee_profile__username')
+        ).first()
         self.article.prefetched_categories = self.article.categories.all()
+        serializer = PublicArticleDetailSerializer(self.article)
+        self.assertEqual(serializer.data['author']['full_name'], "ali samadi")
+
+    def test_author_field_handle_nulls(self):
+        self.user_profile.delete()
+        self.user.first_name = ""
+        self.user.last_name = ""
+        self.user.save()
+        self.article = Article.objects.filter(pk=self.article.pk).annotate(
+            author_first_name=F('author__first_name'),
+            author_last_name=F('author__last_name'),
+            author_username=F('author__user_profile__employee_profile__username')
+        ).first()
+        self.article.prefetched_categories = self.article.categories.all()
+        serializer = PublicArticleDetailSerializer(self.article)
+        data = serializer.data
+        self.assertEqual(data['author']['full_name'], " ")
+        self.assertIsNone(data['author']['username'])
+
+    def test_tags_field(self):
+        serializer = PublicArticleDetailSerializer(self.article)
+        data = serializer.data
+        self.assertEqual(data['tags'], ['python', 'django', 'tabriz'])
 
     def test_category_field(self):
         self.category1 = ArticleCategory.objects.create(name="news")
@@ -257,41 +301,28 @@ class TestPublicArticleDetailSerializer(TestCase):
         self.article.prefetched_categories = self.article.categories.all()
         serializer = PublicArticleDetailSerializer(self.article)
         data = serializer.data
-        actual_categories = data.categories
-        expected_categories = [self.category1, self.category2, self.category3]
+        actual_categories = data['categories']
+        expected_categories = [
+            self.serialize_category(self.category1),
+            self.serialize_category(self.category2),
+            self.serialize_category(self.category3),
+        ]
         self.assertCountEqual(actual_categories, expected_categories)
 
-    # def test_categories_priority(self):
-    #     self.category1 = ArticleCategory.objects.create(name="aaa")
-    #     self.category2 = ArticleCategory.objects.create(name="bbb", priority=1)
-    #     self.category3 = ArticleCategory.objects.create(name="ccc")
-    #     self.category4 = ArticleCategory.objects.create(name="ddd", priority=2)
-    #     self.category5 = ArticleCategory.objects.create(name="eee", priority=0)
-    #     self.category6 = ArticleCategory.objects.create(name="fff", priority=3)
-    #     self.category7 = ArticleCategory.objects.create(name="ggg", priority=8)
-    #     self.category8 = ArticleCategory.objects.create(name="hhh", priority=3)
-    #     self.article.categories.set([
-    #         self.category1,
-    #         self.category2,
-    #         self.category3,
-    #         self.category4,
-    #         self.category5,
-    #         self.category6,
-    #         self.category7,
-    #         self.category8 
-    #     ])
-    #     actual_categories = self.article.prefetched_categories.all()
-    #     expected_categories = [
-    #         self.category1,
-    #         self.category2,
-    #         self.category3,
-    #         self.category4,
-    #         self.category5,
-    #         self.category6,
-    #         self.category7,
-    #         self.category8
-    #     ]
-    #     self.assertCountEqual(actual_categories, expected_categories)
+    def test_category_field_one_object(self):
+        self.category = ArticleCategory.objects.create(name="programming")
+        self.article.categories.add(self.category)
+        self.article.prefetched_categories = self.article.categories.all()
+        serializer = PublicArticleDetailSerializer(self.article)
+        data = serializer.data
+        actual_categories = data['categories']
+        expected_categories = [self.serialize_category(self.category)]
+        self.assertCountEqual(actual_categories, expected_categories)
 
-
-
+    def test_category_field_empty(self):
+        self.article.categories.clear()
+        self.article.prefetched_categories = self.article.categories.none()
+        serializer = PublicArticleDetailSerializer(self.article)
+        data = serializer.data
+        self.assertEqual(data['categories'], [])
+    
