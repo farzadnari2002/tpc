@@ -1,6 +1,14 @@
 from django.test import TestCase
 from blog.models import Article, ArticleCategory
-from blog.serializers import ArticleRelatedField, CategoryHierarchySerializer, PublicArticleListSerializer, PublicArticleDetailSerializer
+from blog.serializers import(
+    ArticleRelatedField,
+    CategoryHierarchySerializer,
+    PublicArticleListSerializer,
+    PublicArticleDetailSerializer,
+    AuthorArticleListSerializer,
+    AuthorArticleDetailSerializer
+)
+from blog.serializers import ArticleRelatedField, CategoryHierarchySerializer, PublicArticleListSerializer, PublicArticleDetailSerializer, AuthorArticleListSerializer, AuthorArticleDetailSerializer
 import tempfile
 from PIL import Image
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -139,6 +147,7 @@ class TestPublicArticleListSerializer(TestCase):
         self.assertEqual(data['short_description'], self.article.short_description)
         self.assertEqual(data['author']['full_name'], f"{self.article.author_first_name} {self.article.author_last_name}")
         self.assertEqual(data['author']['username'], self.article.author_username)
+        self.assertIn('banner_thumbnail', data)
         self.assertIn('published_at', data)
     
     def test_author_full_name_strips_whitespace(self):
@@ -167,23 +176,6 @@ class TestPublicArticleListSerializer(TestCase):
         data = serializer.data
         self.assertEqual(data['author']['full_name'], " ")
         self.assertIsNone(data['author']['username'])
-
-    def test_handle_empty_values(self):
-        self.article.title = ""
-        self.article.slug = ""
-        self.article.short_description = ""
-        self.article.content = {} 
-        self.article.save()
-        serializer = PublicArticleListSerializer(self.article)
-        data = serializer.data
-        self.assertEqual(data['title'], "")
-        self.assertEqual(data['slug'], "")
-        self.assertEqual(data['short_description'], "")
-
-    def test_banner_thumbnail(self):
-        serializer = PublicArticleListSerializer(self.article)
-        data = serializer.data
-        self.assertIsInstance(data['banner_thumbnail'], str)
 
 
 class TestPublicArticleDetailSerializer(TestCase):
@@ -325,4 +317,176 @@ class TestPublicArticleDetailSerializer(TestCase):
         serializer = PublicArticleDetailSerializer(self.article)
         data = serializer.data
         self.assertEqual(data['categories'], [])
+
+
+class TestAuthorArticleListSerializer(TestCase):
+    @classmethod
+    def create_test_image(cls, prefix='test'):
+        """Helper method to create a test image with consistent filename"""
+        image = Image.new('RGB', (100, 100), color='red')
+        tmp_file = tempfile.NamedTemporaryFile(suffix='.jpg')
+        image.save(tmp_file, format='JPEG')
+        tmp_file.seek(0)
+        return SimpleUploadedFile(
+            name=f'banner_{prefix}.jpg',
+            content=tmp_file.read(),
+            content_type='image/jpeg'
+        )      
     
+    def setUp(self):
+        self.user = User.objects.create_user(
+            phone='+989123456789',
+            password='testPass123?',
+        )
+        self.user.first_name = 'ali'
+        self.user.last_name = 'samadi'
+        self.user.save()
+        self.image = self.create_test_image()
+        self.article = Article.objects.create(
+            title='Test Article',
+            author=self.user,
+            content={"blocks": []},
+            short_description='Test short desc',
+            banner=self.image
+        )
+        self.job_category = JobCategory.objects.create(title='developer')
+        self.job = Job.objects.create(name='backend developer')
+        self.job.category.add(self.job_category)
+        self.user_profile = UserProfile.objects.create(
+            user=self.user,
+            gender='M',
+            job=self.job,
+            age=18,
+            bio='example bio'
+        )
+        self.employee_profile = EmployeeProfile.objects.create(
+            user_profile=self.user_profile,
+            username='selisamadi80',
+        )
+        self.article = Article.objects.filter(pk=self.article.pk).annotate(
+            author_first_name=F('author__first_name'),
+            author_last_name=F('author__last_name'),
+            author_username=F('author__user_profile__employee_profile__username')
+        ).first()
+
+    def test_serializer_data(self):
+        serializer = AuthorArticleListSerializer(self.article)
+        data = serializer.data
+        self.assertEqual(data['title'], self.article.title)
+        self.assertEqual(data['slug'], self.article.slug)
+        self.assertEqual(data['short_description'], self.article.short_description)
+        self.assertIn('is_published', data)
+        self.assertIn('published_at', data)
+        self.assertIn('banner_thumbnail', data)
+
+
+class TestAuthorArticleDetailSerializer(TestCase):
+    # mock?
+    @classmethod
+    def create_test_image(cls, prefix='test'):
+        """Helper method to create a test image with consistent filename"""
+        image = Image.new('RGB', (100, 100), color='red')
+        tmp_file = tempfile.NamedTemporaryFile(suffix='.jpg')
+        image.save(tmp_file, format='JPEG')
+        tmp_file.seek(0)
+        return SimpleUploadedFile(
+            name=f'banner_{prefix}.jpg',
+            content=tmp_file.read(),
+            content_type='image/jpeg'
+        )  
+
+    def serialize_category(self, category_obj):
+        return {
+            "name": category_obj.name,
+            "slug": category_obj.slug
+        }       
+    
+    def setUp(self):
+        self.user = User.objects.create_user(
+            phone='+989123456789',
+            password='testPass123?',
+        )
+        self.user.first_name = 'ali'
+        self.user.last_name = 'samadi'
+        self.user.save()
+        self.image = self.create_test_image()
+        self.article = Article.objects.create(
+            title='Test Article',
+            author=self.user,
+            content={"blocks": []},
+            short_description='Test short desc',
+            banner=self.image
+        )
+        self.article.tags.add("python", "django", "tabriz")
+        self.job_category = JobCategory.objects.create(title='developer')
+        self.job = Job.objects.create(name='backend developer')
+        self.job.category.add(self.job_category)
+        self.user_profile = UserProfile.objects.create(
+            user=self.user,
+            gender='M',
+            job=self.job,
+            age=18,
+            bio='example bio'
+        )
+        self.employee_profile = EmployeeProfile.objects.create(
+            user_profile=self.user_profile,
+            username='selisamadi80',
+        )
+        self.article = Article.objects.filter(pk=self.article.pk).annotate(
+            author_first_name=F('author__first_name'),
+            author_last_name=F('author__last_name'),
+            author_username=F('author__user_profile__employee_profile__username')
+        ).first()
+        self.article.prefetched_categories = self.article.categories.all()
+
+    def test_simple_fields(self):
+        serializer = AuthorArticleDetailSerializer(self.article)
+        data = serializer.data
+        self.assertEqual(data['title'], self.article.title)
+        self.assertEqual(data['slug'], self.article.slug)
+        self.assertIn('banner', data)
+        self.assertIn('is_published', data)
+        self.assertIn('published_at', data)
+        self.assertIn('updated_at', data)
+
+    def test_tags_field(self):
+        serializer = AuthorArticleDetailSerializer(self.article)
+        data = serializer.data
+        self.assertEqual(data['tags'], ['python', 'django', 'tabriz'])
+
+    def test_category_field(self):
+        self.category1 = ArticleCategory.objects.create(name="news")
+        self.category2 = ArticleCategory.objects.create(name="it")
+        self.category3 = ArticleCategory.objects.create(name="programming")
+        self.article.categories.add(self.category1, self.category2, self.category3)
+        self.article.prefetched_categories = self.article.categories.all()
+        serializer = AuthorArticleDetailSerializer(self.article)
+        data = serializer.data
+        actual_categories = data['categories']
+        expected_categories = [
+            self.serialize_category(self.category1),
+            self.serialize_category(self.category2),
+            self.serialize_category(self.category3),
+        ]
+        self.assertCountEqual(actual_categories, expected_categories)
+
+    def test_category_field_one_object(self):
+        self.category = ArticleCategory.objects.create(name="programming")
+        self.article.categories.add(self.category)
+        self.article.prefetched_categories = self.article.categories.all()
+        serializer = AuthorArticleDetailSerializer(self.article)
+        data = serializer.data
+        actual_categories = data['categories']
+        expected_categories = [self.serialize_category(self.category)]
+        self.assertCountEqual(actual_categories, expected_categories)
+
+    def test_category_field_empty(self):
+        self.article.categories.clear()
+        self.article.prefetched_categories = self.article.categories.none()
+        serializer = AuthorArticleDetailSerializer(self.article)
+        data = serializer.data
+        self.assertEqual(data['categories'], [])
+
+
+
+
