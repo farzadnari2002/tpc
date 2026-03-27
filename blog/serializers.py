@@ -158,12 +158,27 @@ class AuthorArticleRequestSerializer(serializers.ModelSerializer):
             'status': {'read_only': True},
             'admin_response': {'read_only': True},
         }
+
+    def validate(self, attrs):
+        instance = ArticleRequest(**attrs)
         
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            instance.author = request.user
+
+        try:
+            instance.full_clean()
+        except ValidationError as e:
+            if hasattr(e, 'message_dict'):
+                raise serializers.ValidationError(e.message_dict)
+            else:
+                raise serializers.ValidationError({'non_field_errors': e.messages})
+        
+        return attrs
+
     def create(self, validated_data):
         user = self.context['request'].user
-        
         article_request = ArticleRequest(**validated_data, author=user)
-        
         try:
             article_request.full_clean()
             article_request.save()
@@ -171,7 +186,8 @@ class AuthorArticleRequestSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(e.message_dict)
         except Exception as e:
             raise serializers.ValidationError({"error": str(e)})
-        
+        return article_request
+
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['action'] = instance.get_action_display()

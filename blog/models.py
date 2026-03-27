@@ -17,15 +17,20 @@ def get_upload_banner(instance, filename):
     model_name = 'Article'
     object_name = f"{instance.slug}-{instance.id}"
     folder_type = 'banner'
+    
     return get_upload_to(instance, filename, model_name, object_name, folder_type)
-
 
 def get_upload_images(instance, filename):
     model_name = 'Article'
-    object_name = f"{instance.article.slug}-{instance.article.id}"
+    
+    if instance.article:
+        object_name = f"{instance.article.slug}-{instance.article.id}"
+    else:
+        object_name = f"temp-{instance.upload_session}"
+        
     folder_type = 'images'
+    
     return get_upload_to(instance, filename, model_name, object_name, folder_type)
-
 
 class RequestStatusChoices(models.TextChoices):
     PENDING = 'pending', _('در حال بررسی')
@@ -36,7 +41,8 @@ class RequestStatusChoices(models.TextChoices):
 
 
 class RequestActionChoices(models.TextChoices):
-        PUBLISH = 'publish', _('انتشار')
+        # ADD or PUBLISH?
+        ADD = 'add', _('ایجاد')
         UPDATE = 'update', _('ویرایش')
         DELETE = 'delete', _('حذف')
 
@@ -135,7 +141,6 @@ class Article(models.Model):
             models.Index(fields=['slug'])
         ]
 
-
 class ArticleRequest(models.Model):
     target_id = models.PositiveIntegerField(null=True, blank=True)
     action = models.CharField(max_length=20, choices=RequestActionChoices.choices)
@@ -163,46 +168,42 @@ class ArticleRequest(models.Model):
         editable=False,
         related_name='admin_article_requests'
     )
-    
     def clean(self):
         super().clean()
         errors = {}
+        error_message = _("یافت نشد.")
 
-        if self.article:
-            if self.action == RequestActionChoices.PUBLISH:
-                error_msg = _('این مقاله قبلاً منتشر شده است. برای مقالات منتشر شده فقط امکان ثبت درخواست بروزرسانی یا حذف وجود دارد.')
-                errors['action'] = error_msg
-        
-            if self.author != self.article.author:
-                error_msg = _("فقط نویسنده مقاله مجاز به ثبت درخواست برای آن است.")
-                errors['author'] = error_msg
+        if self.action != RequestActionChoices.ADD and self.target_id:
+            if not Article.objects.filter(pk=self.target_id, is_deleted=False).exists():
+                errors['target_id'] = error_message
+            else:
+                article_obj = Article.objects.get(pk=self.target_id)
+                
+                if self.author != article_obj.author:
+                    errors['author'] = _("فقط نویسنده مقاله مجاز به ثبت درخواست برای آن است.")
+                
+                if self.action == RequestActionChoices.ADD and article_obj.is_published:
+                    error_msg = _('این مقاله قبلاً منتشر شده است. برای مقالات منتشر شده فقط امکان ثبت درخواست بروزرسانی یا حذف وجود دارد.')
+                    errors['action'] = error_msg
 
-            if self.action == RequestActionChoices.DELETE and (not self.comments or self.comments == ''):
-                error_msg = _("برای درخواست حذف باید توضیحات درج شود.")
-                errors['action'] = error_msg
-        else:
-            if self.action in [RequestActionChoices.UPDATE, RequestActionChoices.DELETE]:
-                error_msg = _('برای ثبت درخواست ویرایش یا حذف، مقاله باید ابتدا منتشر شده باشد.')
-                errors['action'] = error_msg
-            
-        if self.status == RequestStatusChoices.NEED_REVISION and (not self.admin_response or self.admin_response == ''):
-            error_msg = _("در وضعیت نیاز به اصلاح باید پاسخی به نویسنده داده شود.")
-            errors['admin_response'] = error_msg
-        
+        if self.action == RequestActionChoices.DELETE and (not self.comments or self.comments == ''):
+            errors['comments'] = _("برای درخواست از نوع حذف باید توضیحات درج شود.")
+
+        if self.action != RequestActionChoices.ADD and not self.target_id:
+            errors['target_id'] = _("نباید خالی باشد.")
+
         if errors:
             raise ValidationError(errors)
-
+        
     def save(self, *args, **kwargs):
         self.clean()
-        
         if self.status == RequestStatusChoices.NEED_REVISION:
             self.need_revision = True
-        
         super().save(*args, **kwargs)
 
     def __str__(self):
         return f"ArticleRequest(id={self.pk}, action={self.action}, status={self.status})"
-    
+
     class Meta:
         verbose_name = _("درخواست")
         verbose_name_plural = _("درخواست ها")
