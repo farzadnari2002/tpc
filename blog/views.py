@@ -15,10 +15,10 @@ class PublicCategoryListView(generics.ListAPIView):
     ).prefetch_related(
             Prefetch(
                 'children',
-                queryset=ArticleCategory.objects.filter(is_active=True).order_by('priority', 'lft'),
+                queryset=ArticleCategory.objects.filter(is_active=True).order_by('lft'),
                 to_attr='prefetched_children'
             )
-    ).order_by('priority', 'lft')
+    ).order_by('lft')
 
 
 class AuthorCategoryListView(generics.ListAPIView):
@@ -28,10 +28,10 @@ class AuthorCategoryListView(generics.ListAPIView):
     ).prefetch_related(
             Prefetch(
                 'children',
-                queryset=ArticleCategory.objects.filter(is_active=True).order_by('priority', 'lft'),
+                queryset=ArticleCategory.objects.filter(is_active=True).order_by('lft'),
                 to_attr='prefetched_children'
             )
-    ).order_by('priority', 'lft')
+    ).order_by('lft')
 
 
 class PublicArticleListView(generics.ListAPIView):
@@ -67,7 +67,7 @@ class PublicArticleDetailView(generics.RetrieveAPIView):
         'tags',
         Prefetch(
             'categories',
-            queryset=ArticleCategory.objects.filter(is_active=True).order_by('priority', 'lft'),
+            queryset=ArticleCategory.objects.filter(is_active=True).order_by('lft'),
             to_attr='prefetched_categories'
         )
     )
@@ -95,7 +95,7 @@ class AuthorArticleDetailView(generics.RetrieveAPIView):
         'tags',
         Prefetch(
             'categories',
-            queryset=ArticleCategory.objects.all(),
+            queryset=ArticleCategory.objects.all().order_by('lft'),
             to_attr='prefetched_categories'
         )
     )

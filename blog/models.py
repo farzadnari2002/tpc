@@ -11,6 +11,8 @@ from django.utils import timezone
 from simple_history.models import HistoricalRecords
 from django.contrib.postgres.search import SearchVectorField
 from django.core.exceptions import ValidationError
+from django.contrib.postgres.indexes import GinIndex
+from django.core.validators import MinValueValidator
 
 
 def get_upload_banner(instance, filename):
@@ -20,17 +22,18 @@ def get_upload_banner(instance, filename):
     
     return get_upload_to(instance, filename, model_name, object_name, folder_type)
 
-def get_upload_images(instance, filename):
-    model_name = 'Article'
+# def get_upload_image(instance, filename):
+#     model_name = 'Article'
     
-    if instance.article:
-        object_name = f"{instance.article.slug}-{instance.article.id}"
-    else:
-        object_name = f"temp-{instance.upload_session}"
+#     if instance.article:
+#         object_name = f"{instance.article.slug}-{instance.article.id}"
+#     else:
+#         object_name = f"temp-{instance.upload_session}"
         
-    folder_type = 'images'
+#     folder_type = 'images'
     
-    return get_upload_to(instance, filename, model_name, object_name, folder_type)
+#     return get_upload_to(instance, filename, model_name, object_name, folder_type)
+
 
 class RequestStatusChoices(models.TextChoices):
     PENDING = 'pending', _('در حال بررسی')
@@ -49,7 +52,7 @@ class RequestActionChoices(models.TextChoices):
 
 class ArticleCategory(MPTTModel):
     name = models.CharField(max_length=100, verbose_name=_('نام دسته بندی'))
-    slug = AutoSlugField(source_field='name', verbose_name=_('آدرس دسته بندی'))
+    slug = AutoSlugField(source_field='name', unique=True, verbose_name=_('آدرس دسته بندی'))
     parent = TreeForeignKey(
         'self',
         on_delete=models.CASCADE,
@@ -57,13 +60,6 @@ class ArticleCategory(MPTTModel):
         related_name='children',
         verbose_name=_('دسته بندی والد')
         )
-    # help_text test
-    priority = models.PositiveSmallIntegerField(
-        null=True, 
-        blank=True, 
-        verbose_name=_('اولویت نمایش'),
-        help_text=_('هر چه عدد کمتر باشد، در لیست بالاتر نمایش داده می‌شود')
-    )
     is_active = models.BooleanField(default=True, verbose_name=_('وضعیت فعال بودن/نبودن'))
     is_special = models.BooleanField(default=False, verbose_name=_('وضعیت ویژه بودن/نبودن'))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاریخ ایجاد'))
@@ -85,8 +81,8 @@ class ArticleCategory(MPTTModel):
     class Meta:
         verbose_name = _('دسته بندی مقاله')
         verbose_name_plural = _('دسته بندی های مقاله')
-        ordering = ['priority', 'id', 'created_at']
-        db_table = 'article_category'
+        # ordering with?
+        ordering = ['name']
         indexes = [
             models.Index(fields=['slug'])
         ]
@@ -100,7 +96,8 @@ class Article(models.Model):
     verbose_name=_('نویسنده مقاله')
     )
     title = models.CharField(max_length=250, verbose_name=_('عنوان مقاله'))
-    slug = AutoSlugField(source_field='title', verbose_name=_('آدرس مقاله'))
+    slug = AutoSlugField(source_field='title', unique=True, verbose_name=_('آدرس مقاله'))
+    # sv field need signal
     sv = SearchVectorField(blank=True, null=True, editable=False)
     banner = models.ImageField(
         upload_to=get_upload_banner,
@@ -123,8 +120,8 @@ class Article(models.Model):
     tags = TaggableManager(verbose_name=_('برچسب ها'))
     content = models.JSONField(verbose_name=_('محتوای مقاله'))
     short_description = models.TextField()
-    # check published_at field
-    published_at = models.DateTimeField(auto_now_add=True,verbose_name=_('تاریخ انتشار'))
+    # need signal for published at
+    published_at = models.DateTimeField(blank=True, null=True, editable=False, verbose_name=_('تاریخ انتشار'))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاریخ بروزرسانی'))
     is_published = models.BooleanField(default=False, verbose_name=_('وضعیت انتشار'))
     is_deleted = models.BooleanField(default=False, verbose_name=_('وضعیت حذف'))
@@ -136,14 +133,49 @@ class Article(models.Model):
         verbose_name = _('مقاله')
         verbose_name_plural = _('مقالات')
         ordering = ['-published_at']
-        db_table = 'article'
         indexes = [
-            models.Index(fields=['slug'])
+            GinIndex(fields=['sv']),
+            models.Index(fields=['slug']),
+            models.Index(fields=['is_deleted', 'is_published']),
         ]
+
+
+class ArticleImage(models.Model):
+    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='images', null=True, blank=True)
+    image = models.ImageField(upload_to='Article/images/', validators=[validate_image_size])
+    alt_text = models.CharField(max_length=255, null=True, blank=True)
+    order = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        verbose_name=_('ترتیب تصویر'),
+        validators=[MinValueValidator(1)], 
+    )
+    upload_session = models.UUIDField(null=True, blank=True, db_index=True)
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='article_images'
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        if not self.article and not self.upload_session:
+            raise ValidationError(
+                _('خطا: هر عکس باید یا متعلق به یک مقاله باشد یا یک شناسه جلسه (upload_session) داشته باشد.')
+            )
+    
+    def __str__(self):
+        return f"Image for {self.article}"
+    
+    class Meta:
+        verbose_name = _('Article Image')
+        verbose_name_plural = _("Article Images")
+
 
 class ArticleRequest(models.Model):
     target_id = models.PositiveIntegerField(null=True, blank=True)
     action = models.CharField(max_length=20, choices=RequestActionChoices.choices)
+    # signal for is_published=True?
     status = models.CharField(
         max_length=20, choices=RequestStatusChoices.choices,
         default=RequestStatusChoices.DRAFT,
@@ -168,35 +200,38 @@ class ArticleRequest(models.Model):
         editable=False,
         related_name='admin_article_requests'
     )
+    
     def clean(self):
         super().clean()
         errors = {}
-        error_message = _("یافت نشد.")
+        pending_count = ArticleRequest.objects.filter(
+            author=self.author,
+            status=RequestStatusChoices.PENDING,
+            is_deleted=False
+        ).count()
+        article_obj = Article.objects.filter(pk=self.target_id, is_deleted=False).first()
 
-        if self.action != RequestActionChoices.ADD and self.target_id:
-            if not Article.objects.filter(pk=self.target_id, is_deleted=False).exists():
-                errors['target_id'] = error_message
-            else:
-                article_obj = Article.objects.get(pk=self.target_id)
-                
+        if self.status == RequestStatusChoices.PENDING and pending_count >= 5:
+            errors.setdefault('__all__', []).append(_("یک کاربر نمی‌تواند بیش از ۵ درخواست در حال بررسی داشته باشد."))
+        
+        if self.action != RequestActionChoices.ADD:
+            if article_obj:
                 if self.author != article_obj.author:
-                    errors['author'] = _("فقط نویسنده مقاله مجاز به ثبت درخواست برای آن است.")
-                
-                if self.action == RequestActionChoices.ADD and article_obj.is_published:
-                    error_msg = _('این مقاله قبلاً منتشر شده است. برای مقالات منتشر شده فقط امکان ثبت درخواست بروزرسانی یا حذف وجود دارد.')
-                    errors['action'] = error_msg
+                    errors.setdefault('author', []).append(_("فقط نویسنده مقاله مجاز به ثبت درخواست برای آن است."))
+            else:
+                errors.setdefault('target_id', []).append(_("برای تمامی عملیات ها به غیر از انتشار‌،باید مقاله انتخاب شود."))
 
         if self.action == RequestActionChoices.DELETE and (not self.comments or self.comments == ''):
-            errors['comments'] = _("برای درخواست از نوع حذف باید توضیحات درج شود.")
-
-        if self.action != RequestActionChoices.ADD and not self.target_id:
-            errors['target_id'] = _("نباید خالی باشد.")
+            errors.setdefault('comments', []).append(_("برای درخواست از نوع حذف باید توضیحات درج شود."))
+            
+        if self.status == RequestStatusChoices.NEED_REVISION and (not self.admin_response or self.admin_response == ''):
+            errors.setdefault('admin_response', []).append(_("در وضعیت نیاز به اصلاح باید پاسخی به نویسنده داده شود."))
 
         if errors:
             raise ValidationError(errors)
         
     def save(self, *args, **kwargs):
-        self.clean()
+        self.full_clean()
         if self.status == RequestStatusChoices.NEED_REVISION:
             self.need_revision = True
         super().save(*args, **kwargs)
@@ -208,24 +243,5 @@ class ArticleRequest(models.Model):
         verbose_name = _("درخواست")
         verbose_name_plural = _("درخواست ها")
         ordering = ['-created_at', '-id']
-        db_table = 'article_request'
-
-
-class ArticleImage(models.Model):
-    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='images', null=True, blank=True)
-    image = models.ImageField(upload_to=get_upload_images, validators=[validate_image_size])
-    alt_text = models.CharField(max_length=255)
-    order = models.PositiveIntegerField(default=0, db_index=True)
-    upload_session = models.UUIDField(null=True, blank=True, db_index=True)
-    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    uploaded_at = models.DateTimeField(auto_now_add=True)
-    
-    def __str__(self):
-        return f"Image for {self.article}"
-    
-    class Meta:
-        verbose_name = _('Article Image')
-        verbose_name_plural = _("Article Images")
-        db_table = 'article_image'
 
 
