@@ -78,7 +78,8 @@ class PublicArticleDetailSerializer(TaggitSerializer, serializers.ModelSerialize
         }
     
     def get_categories(self, obj):
-        return list(obj.prefetched_categories.values("name", "slug"))
+        categories = getattr(obj, 'prefetched_categories', [])
+        return [{"name": category.name, "slug": category.slug} for category in categories]
 
 
 class AuthorArticleListSerializer(TaggitSerializer, serializers.ModelSerializer):
@@ -104,7 +105,8 @@ class AuthorArticleDetailSerializer(TaggitSerializer, serializers.ModelSerialize
         )
 
     def get_categories(self, obj):
-        return list(obj.prefetched_categories.values("name", "slug"))
+        categories = getattr(obj, 'prefetched_categories', [])
+        return [{"name": category.name, "slug": category.slug} for category in categories]
 
 
 class AuthorUploadImageSerializer(serializers.ModelSerializer):
@@ -117,7 +119,6 @@ class AuthorUploadImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ArticleImage
         fields = ('article_id' ,'article', 'id', 'image', 'alt_text', 'order', 'upload_session')
-        read_only_fields = ('id', 'article_id')
         
     def create(self, validated_data):
         user = self.context['request'].user

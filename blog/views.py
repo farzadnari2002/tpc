@@ -24,11 +24,11 @@ class PublicCategoryListView(generics.ListAPIView):
 class AuthorCategoryListView(generics.ListAPIView):
     serializer_class = CategoryHierarchySerializer
     queryset = ArticleCategory.objects.filter(
-        parent=None, is_active=True
+        parent=None, is_active=True, is_special=False
     ).prefetch_related(
             Prefetch(
                 'children',
-                queryset=ArticleCategory.objects.filter(is_active=True).order_by('lft'),
+                queryset=ArticleCategory.objects.filter(is_active=True, is_special=False).order_by('lft'),
                 to_attr='prefetched_children'
             )
     ).order_by('lft')
@@ -39,6 +39,15 @@ class PublicArticleListView(generics.ListAPIView):
         is_published=True,
         is_deleted=False
     ).annotate(
+        has_active_category=Exists(
+            ArticleCategory.objects.filter(
+                is_active=True,
+                articles=OuterRef('pk')
+                )
+            )
+        ).filter(
+            has_active_category=True
+        ).annotate(
         author_username=F('author__user_profile__employee_profile__username'),
         author_first_name=F('author__first_name'),
         author_last_name=F('author__last_name')
@@ -82,7 +91,7 @@ class AuthorArticleListView(generics.ListAPIView):
     def get_queryset(self):
         return Article.objects.filter(is_deleted=False, author=self.request.user)
     
-
+    
 class AuthorArticleDetailView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = AuthorArticleDetailSerializer
@@ -160,7 +169,7 @@ class AuthorArticleRequestViewSet(viewsets.ViewSet):
     
     def partial_update(self, request, pk=None):
         queryset = get_object_or_404(ArticleRequest, author=request.user, pk=pk, is_deleted=False)
-        serializer = self.serializer_class(queryset, data=request.data, partial=True)
+        serializer = self.serializer_class(queryset, data=request.data, partial=True, context={'request':request})
         
         check_status = bool(queryset.status in [RequestStatusChoices.DRAFT, RequestStatusChoices.NEED_REVISION])
         if not check_status:

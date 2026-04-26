@@ -6,7 +6,7 @@ from blog.models import (
     ArticleCategory
 )
 from django.dispatch import receiver
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import post_save
 from django.utils import timezone
 from django.contrib.postgres.search import SearchVector
 from utils import update_descendants_active_status

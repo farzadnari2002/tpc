@@ -3,12 +3,12 @@ from blog import views
 
 
 urlpatterns = [
-    path('categories/', views.AuthorCategoryListView.as_view(),name='category-list'),
+    path('categories/', views.AuthorCategoryListView.as_view(),name='author-category-list'),
     path('articles/', views.AuthorArticleListView.as_view(), name='article-list'),
-    path('article/<int:pk>/', views.AuthorArticleDetailView.as_view(), name='course-detail'),
+    path('articles/<int:pk>/', views.AuthorArticleDetailView.as_view(), name='author-article-detail'),
     path('upload/', views.AuthorUploadImageViewSet.as_view({'post': 'create'}), name='author-upload'),
 
-    # region Course Request
+    # region Article Request
     path(
         'article/request/',
         views.AuthorArticleRequestViewSet.as_view({'post': 'create', 'get': 'list'}),
