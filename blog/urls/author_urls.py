@@ -10,23 +10,23 @@ urlpatterns = [
 
     # region Article Request
     path(
-        'article/request/',
+        'articles/requests/',
         views.AuthorArticleRequestViewSet.as_view({'post': 'create', 'get': 'list'}),
         name='author-article-request'
     ),
     path(
-        'article/request/<int:pk>/',
+        'articles/requests/<int:pk>/',
         views.AuthorArticleRequestViewSet.as_view(
             {'get': 'retrieve', 'patch': 'partial_update', 'delete': 'destroy'}),
         name='author-article-request-detail'
     ),
     path(
-        'article/send-request/<int:pk>/',
+        'articles/send-request/<int:pk>/',
         views.AuthorArticleRequestViewSet.as_view({'post': 'send_request'}),
         name='author-article-send-request'
     ),
     path(
-        'article/cancel-request/<int:pk>/',
+        'articles/cancel-request/<int:pk>/',
         views.AuthorArticleRequestViewSet.as_view({'post': 'cancel_request'}),
         name='author-article-cancel-request'
     ),
