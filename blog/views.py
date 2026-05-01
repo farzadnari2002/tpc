@@ -6,6 +6,8 @@ from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.utils.translation.trans_null import gettext_lazy as _
 from django.db.models import Q, Prefetch, Count, F, Exists, OuterRef
+from blog.filters import ArticleFilter
+from django_filters.rest_framework import DjangoFilterBackend
 
 
 class PublicCategoryListView(generics.ListAPIView):
@@ -53,6 +55,8 @@ class PublicArticleListView(generics.ListAPIView):
         author_last_name=F('author__last_name')
     )
     serializer_class = PublicArticleListSerializer
+    filterset_class = ArticleFilter
+    filter_backends = (DjangoFilterBackend,)
 
 
 class PublicArticleDetailView(generics.RetrieveAPIView):
