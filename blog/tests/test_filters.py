@@ -123,27 +123,27 @@ class TestArticleFilter(APITestCase):
     def test_order_by_published_at_ascending(self):
         response = self.client.get('/articles/?ordering=published')
         
-        self.assertEqual(response.data[0]['title'], self.article1.title)
-        self.assertEqual(response.data[1]['title'], self.article2.title)
-        self.assertEqual(response.data[2]['title'], self.article3.title)
-        self.assertEqual(response.data[3]['title'], self.article4.title)
-        self.assertEqual(response.data[4]['title'], self.article5.title)
+        self.assertEqual(response.data['results'][0]['title'], self.article1.title)
+        self.assertEqual(response.data['results'][1]['title'], self.article2.title)
+        self.assertEqual(response.data['results'][2]['title'], self.article3.title)
+        self.assertEqual(response.data['results'][3]['title'], self.article4.title)
+        self.assertEqual(response.data['results'][4]['title'], self.article5.title)
 
     def test_order_by_published_at_descending(self):
         response = self.client.get('/articles/?ordering=-published')
 
-        self.assertEqual(response.data[0]['title'], self.article5.title)
-        self.assertEqual(response.data[1]['title'], self.article4.title)
-        self.assertEqual(response.data[2]['title'], self.article3.title)
-        self.assertEqual(response.data[3]['title'], self.article2.title)
-        self.assertEqual(response.data[4]['title'], self.article1.title)
+        self.assertEqual(response.data['results'][0]['title'], self.article5.title)
+        self.assertEqual(response.data['results'][1]['title'], self.article4.title)
+        self.assertEqual(response.data['results'][2]['title'], self.article3.title)
+        self.assertEqual(response.data['results'][3]['title'], self.article2.title)
+        self.assertEqual(response.data['results'][4]['title'], self.article1.title)
 
     def test_filter_by_category(self):
         response = self.client.get(f'/articles/?category=python')
 
-        self.assertEqual(len(response.data), 4)
+        self.assertEqual(len(response.data['results']), 4)
 
-        titles = [item['title'] for item in response.data]
+        titles = [item['title'] for item in response.data['results']]
         self.assertIn(self.article1.title, titles) 
         self.assertIn(self.article3.title, titles)
         self.assertIn(self.article4.title, titles)
@@ -151,24 +151,24 @@ class TestArticleFilter(APITestCase):
 
         response = self.client.get(f'/articles/?category=java')
 
-        self.assertEqual(len(response.data), 2)
+        self.assertEqual(len(response.data['results']), 2)
 
-        titles = [item['title'] for item in response.data]
+        titles = [item['title'] for item in response.data['results']]
         self.assertIn(self.article2.title, titles) 
         self.assertIn(self.article5.title, titles)
 
         response = self.client.get(f'/articles/?category=بک-اند')
 
-        self.assertEqual(len(response.data), 2)
+        self.assertEqual(len(response.data['results']), 2)
 
-        titles = [item['title'] for item in response.data]
+        titles = [item['title'] for item in response.data['results']]
         self.assertIn(self.article3.title, titles) 
         self.assertIn(self.article4.title, titles)
 
         response = self.client.get(f'/articles/?category=جنگو')
 
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]['title'], self.article4.title)
+        self.assertEqual(len(response.data['results']), 1)
+        self.assertEqual(response.data['results'][0]['title'], self.article4.title)
     
 
 

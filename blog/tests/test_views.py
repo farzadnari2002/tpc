@@ -12,6 +12,154 @@ from io import BytesIO
 from uuid import uuid4
 
 
+class TestArticleListPaginition(APITestCase):
+    @classmethod
+    def create_test_image(cls, prefix='test'):
+        """Helper method to create a test image with consistent filename"""
+        image = Image.new('RGB', (100, 100), color='red')
+        tmp_file = tempfile.NamedTemporaryFile(suffix='.jpg')
+        image.save(tmp_file, format='JPEG')
+        tmp_file.seek(0)
+        return SimpleUploadedFile(
+            name=f'banner_{prefix}.jpg',
+            content=tmp_file.read(),
+            content_type='image/jpeg'
+        )  
+
+    @classmethod    
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(
+            phone='+989123456789',
+            password='testPass123?',
+        )
+        cls.user.first_name = 'ali'
+        cls.user.last_name = 'samadi'
+        cls.user.save()
+        cls.image = cls.create_test_image()
+        cls.job_category = JobCategory.objects.create(title='developer')
+        cls.job = Job.objects.create(name='backend developer')
+        cls.job.category.add(cls.job_category)
+        cls.user_profile = UserProfile.objects.create(
+            user=cls.user,
+            gender='M',
+            job=cls.job,
+            age=18,
+            bio='example bio'
+        )
+        cls.employee_profile = EmployeeProfile.objects.create(
+            user_profile=cls.user_profile,
+            username='selisamadi80',
+        )
+        cls.category = ArticleCategory.objects.create(name='it')
+        for i in range(40):
+            cls.article_test = Article.objects.create(
+                title=f'{i}',
+                author=cls.user,
+                content={"blocks": []},
+                short_description='Test short desc',
+                banner=cls.create_test_image(),
+                is_published = True,
+                published_at = timezone.now()
+            )
+            cls.article_test.categories.add(cls.category)
+
+    def test_simple_paginition(self):
+        response = self.client.get('/articles/')
+        self.assertEqual(len(response.data['results']), 16)
+        self.assertEqual(response.data['results'][0]['title'], '39')
+        self.assertIsNone(response.data['previous'])
+        self.assertIsNotNone(response.data['next'])
+
+        response2 = self.client.get(response.data['next'])
+        self.assertEqual(len(response2.data['results']), 16)
+        self.assertEqual(response2.data['results'][0]['title'], '23')
+        self.assertIsNotNone(response2.data['previous'])
+        self.assertIsNotNone(response2.data['next'])
+
+        response3 = self.client.get(response2.data['next'])
+        self.assertEqual(len(response3.data['results']), 8)
+        self.assertEqual(response3.data['results'][0]['title'], '7')
+        self.assertIsNotNone(response3.data['previous'])
+        self.assertIsNone(response3.data['next'])
+
+        response4 = self.client.get(response3.data['previous'])
+        self.assertEqual(len(response4.data['results']), 16)
+        self.assertEqual(response4.data['results'][0]['title'], '23')
+        self.assertIsNotNone(response4.data['previous'])
+        self.assertIsNotNone(response4.data['next'])
+
+    def test_paginition_with_custom_page_size(self):
+        response = self.client.get('/articles/?page_size=20')
+        self.assertEqual(len(response.data['results']), 20)
+        self.assertEqual(response.data['results'][0]['title'], '39')
+        self.assertIsNone(response.data['previous'])
+        self.assertIsNotNone(response.data['next'])
+
+        response2 = self.client.get(response.data['next'])
+        self.assertEqual(len(response2.data['results']), 20)
+        self.assertEqual(response2.data['results'][0]['title'], '19')
+        self.assertIsNotNone(response2.data['previous'])
+        self.assertIsNone(response2.data['next'])
+
+        response3 = self.client.get(response2.data['previous'])
+        self.assertEqual(len(response3.data['results']), 20)
+        self.assertEqual(response3.data['results'][0]['title'], '39')
+        self.assertIsNone(response3.data['previous'])
+        self.assertIsNotNone(response3.data['next'])
+
+        response4 = self.client.get('/articles/?page_size=1')
+        self.assertEqual(len(response4.data['results']), 1)
+        self.assertEqual(response4.data['results'][0]['title'], '39')
+        self.assertIsNone(response4.data['previous'])
+        self.assertIsNotNone(response4.data['next'])
+        
+    def test_paginition_with_custom_page_size_limitation(self):
+        for i in range(60):
+            self.article_test = Article.objects.create(
+                title=f'{i}plus',
+                author=self.user,
+                content={"blocks": []},
+                short_description='Test short desc',
+                banner=self.create_test_image(),
+                is_published = True,
+                published_at = timezone.now()
+            )
+            self.article_test.categories.add(self.category)
+
+        response = self.client.get('/articles/?page_size=105')
+        self.assertEqual(len(response.data['results']), 100)
+        self.assertEqual(response.data['results'][0]['title'], '59plus')
+        self.assertIsNone(response.data['previous'])
+        self.assertIsNone(response.data['next'])
+    
+    def test_paginition_with_ordering(self):
+        response = self.client.get('/articles/?ordering=published')
+        self.assertEqual(len(response.data['results']), 16)
+        self.assertEqual(response.data['results'][0]['title'], '0')
+        self.assertIsNone(response.data['previous'])
+        self.assertIsNotNone(response.data['next'])
+
+    def test_paginition_with_filtering(self):
+        self.my_test_category = ArticleCategory.objects.create(name='security')
+        for i in range(16):
+            self.article_test = Article.objects.create(
+                title=f'{i}pp',
+                author=self.user,
+                content={"blocks": []},
+                short_description='Test short desc',
+                banner=self.create_test_image(),
+                is_published = True,
+                published_at = timezone.now()
+            )
+            self.article_test.categories.add(self.my_test_category)
+
+        response = self.client.get(f'/articles/?category={self.my_test_category.slug}')
+        self.assertEqual(len(response.data['results']), 16)
+        self.assertEqual(response.data['results'][0]['title'], '15pp')
+        self.assertIsNone(response.data['previous'])
+        self.assertIsNone(response.data['next'])
+
+
 class TestPublicCategoryListView(APITestCase):
     def setUp(self):
         self.parent1 = ArticleCategory.objects.create(name='python')
@@ -190,14 +338,14 @@ class TestPublicArticleListView(APITestCase):
     def test_ordering(self):
         response = self.client.get('/articles/')
 
-        self.assertEqual(response.data[0]['title'], 'tabriz programmers')
-        self.assertEqual(response.data[1]['title'], 'soft skills')
-        self.assertEqual(response.data[2]['title'], 'cyber security')
+        self.assertEqual(response.data['results'][0]['title'], 'tabriz programmers')
+        self.assertEqual(response.data['results'][1]['title'], 'soft skills')
+        self.assertEqual(response.data['results'][2]['title'], 'cyber security')
 
     def test_author_data(self):
         response = self.client.get('/articles/')
-        self.assertEqual(response.data[0]['author']['full_name'], 'ali samadi')
-        self.assertEqual(response.data[0]['author']['username'], 'selisamadi80')
+        self.assertEqual(response.data['results'][0]['author']['full_name'], 'ali samadi')
+        self.assertEqual(response.data['results'][0]['author']['username'], 'selisamadi80')
 
     def test_ignoring_is_deleted_true(self):
         self.article1.is_deleted = True
@@ -209,7 +357,7 @@ class TestPublicArticleListView(APITestCase):
         response = self.client.get('/articles/')
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 0)
+        self.assertEqual(len(response.data['results']), 0)
 
     def test_ignoring_is_published_false(self):
         self.article1.is_published = False
@@ -221,7 +369,7 @@ class TestPublicArticleListView(APITestCase):
         response = self.client.get('/articles/')
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 0)
+        self.assertEqual(len(response.data['results']), 0)
 
     def test_ignoring_is_has_active_category_false(self):
         self.category.is_active = False
@@ -232,9 +380,9 @@ class TestPublicArticleListView(APITestCase):
         response = self.client.get('/articles/')
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 0)
-
-
+        self.assertEqual(len(response.data['results']), 0)
+        
+        
 class TestPublicArticleDetailView(APITestCase):
     @classmethod
     def create_test_image(cls, prefix='test'):
@@ -416,7 +564,7 @@ class TestAuthorArticleListView(APITestCase):
         response = self.client.get('/author/articles/')
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 2)
+        self.assertEqual(len(response.data['results']), 2)
       
     def test_unauthenticated_user_gets_401(self):
         response = self.client.get('/author/articles/')
@@ -425,9 +573,8 @@ class TestAuthorArticleListView(APITestCase):
     def test_ordering(self):
         self.client.force_authenticate(user=self.user)
         response = self.client.get('/author/articles/')
-
-        self.assertEqual(response.data[0]['title'], 'soft skills')
-        self.assertEqual(response.data[1]['title'], 'cyber security')
+        self.assertEqual(response.data['results'][0]['title'], 'soft skills')
+        self.assertEqual(response.data['results'][1]['title'], 'cyber security')
 
     def test_ignoring_is_deleted_true(self):
         self.article1.is_deleted = True
@@ -439,15 +586,15 @@ class TestAuthorArticleListView(APITestCase):
         response = self.client.get('/author/articles/')
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 0)
+        self.assertEqual(len(response.data['results']), 0)
 
     def test_another_user(self):
        self.client.force_authenticate(user=self.another_user)
        response = self.client.get('/author/articles/')
 
        self.assertEqual(response.status_code, 200)
-       self.assertEqual(len(response.data), 1)
-       self.assertEqual(response.data[0]['title'], 'tabriz programmers')
+       self.assertEqual(len(response.data['results']), 1)
+       self.assertEqual(response.data['results'][0]['title'], 'tabriz programmers')
 
 
 class TestAuthorArticleDetailView(APITestCase):

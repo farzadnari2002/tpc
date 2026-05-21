@@ -8,6 +8,19 @@ from django.utils.translation.trans_null import gettext_lazy as _
 from django.db.models import Q, Prefetch, Count, F, Exists, OuterRef
 from blog.filters import ArticleFilter
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.pagination import CursorPagination
+
+
+class ArticleListPagination(CursorPagination):
+    page_size = 16
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+    ordering = ['-published_at'] 
+
+    def get_ordering(self, request, queryset, view):
+        if queryset.query.order_by:
+            return queryset.query.order_by
+        return self.ordering
 
 
 class PublicCategoryListView(generics.ListAPIView):
@@ -57,6 +70,8 @@ class PublicArticleListView(generics.ListAPIView):
     serializer_class = PublicArticleListSerializer
     filterset_class = ArticleFilter
     filter_backends = (DjangoFilterBackend,)
+    pagination_class = ArticleListPagination
+
 
 
 class PublicArticleDetailView(generics.RetrieveAPIView):
@@ -90,7 +105,9 @@ class PublicArticleDetailView(generics.RetrieveAPIView):
 
 class AuthorArticleListView(generics.ListAPIView):
     serializer_class = AuthorArticleListSerializer
-    permission_classes = [IsAuthenticated] 
+    permission_classes = [IsAuthenticated]
+    pagination_class = ArticleListPagination
+ 
 
     def get_queryset(self):
         return Article.objects.filter(is_deleted=False, author=self.request.user)
